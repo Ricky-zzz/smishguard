@@ -1,8 +1,10 @@
 """Fine-tune a small encoder for SmishGuard SMS classification.
 
-    python finetune.py --model Xenova/all-MiniLM-L6-v2 --data data --out model
+    python finetune.py --model sentence-transformers/all-MiniLM-L6-v2 --data data --out model
 
-For Taglish robustness, try --model jcblaise/roberta-tagalog-base instead.
+Use a PyTorch backbone (sentence-transformers/all-MiniLM-L6-v2), NOT the ONNX-only
+Xenova/* repo which has no trainable weights. For Taglish robustness, try
+jcblaise/roberta-tagalog-base instead.
 """
 
 import argparse
@@ -32,13 +34,17 @@ def load_split(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="Xenova/all-MiniLM-L6-v2")
+    parser.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
     parser.add_argument("--data", default="data")
     parser.add_argument("--out", default="model")
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--batch", type=int, default=32)
     args = parser.parse_args()
+
+    import torch
+
+    print("CUDA available:", torch.cuda.is_available())
 
     train_ds = load_split(os.path.join(args.data, "train.csv"))
     val_ds = load_split(os.path.join(args.data, "val.csv"))
@@ -70,7 +76,7 @@ def main():
             "f1": f1_score(pred.label_ids, preds, average="macro"),
         }
 
-    trainer = Trainer(
+    trainer_kwargs = dict(
         model=model,
         args=TrainingArguments(
             output_dir=os.path.join(args.out, "runs"),
@@ -85,10 +91,13 @@ def main():
         ),
         train_dataset=tokenized,
         eval_dataset=val_tok,
-        tokenizer=tokenizer,
         data_collator=DataCollatorWithPadding(tokenizer),
         compute_metrics=metrics,
     )
+    try:
+        trainer = Trainer(processing_class=tokenizer, **trainer_kwargs)
+    except TypeError:
+        trainer = Trainer(tokenizer=tokenizer, **trainer_kwargs)
 
     trainer.train()
     print("Validation:", trainer.evaluate())

@@ -57,15 +57,17 @@ qualifies (in-scope list includes *Local embeddings*, *Edge AI*, *Privacy-preser
 
 ## 4. Training requirements
 
-- **TR1 — Data.** Use public PH SMS datasets: Kaggle "PH Spam + Marketing SMS",
-  `Bwandowando/philippine-spam-sms-messages`, and `scottleechua` 5-category set. Document
-  every source. Normalize to `text,label`.
-- **TR2 — Backbone.** Start with `Xenova/all-MiniLM-L6-v2` (multilingual, small,
-  proven in Transformers.js). Swap to `jcblaise/roberta-tagalog-base` only if NFR1 fails.
+- **TR1 — Data.** Use public PH SMS datasets (`--ph-preset` pulls scottleechua
+  CC-BY-4.0 + the Henit007 Hugging Face sets; `--bootstrap` adds the English SMS Spam
+  Collection). Document every source. Normalize to `text,label`.
+- **TR2 — Backbone.** Start with `sentence-transformers/all-MiniLM-L6-v2` (PyTorch,
+  small, exports cleanly). The ONNX-only `Xenova/*` repos are for inference, not training.
+  Swap to `jcblaise/roberta-tagalog-base` only if NFR1 fails.
 - **TR3 — Method.** Fine-tune a sequence-classification head end-to-end (not just a probe)
   so the artifact is genuinely "our trained model".
-- **TR4 — Export.** `optimum-cli export onnx --task text-classification` → dynamic int8
-  quantization → publish tokenizer + ONNX to a public Hugging Face repo.
+- **TR4 — Export.** `torch.onnx.export` → dynamic int8 quantization → publish tokenizer +
+  config + `onnx/model_quantized.onnx` to a public Hugging Face repo. (Not `optimum-cli`,
+  which conflicts with Colab's diffusers/huggingface_hub versions.)
 - **TR5 — Evaluation.** Hold out ~15% stratified; produce a confusion matrix + F1
   reported in the README. If the corpus is small/noisy, say so.
 

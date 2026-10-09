@@ -29,7 +29,7 @@ reviewable in the public repo **as of the code freeze**. See `requirements.md` f
 ## 4. The disclosures
 
 - [ ] **Models:** backbone (MiniLM-L6-v2 or roberta-tagalog-base) + our fine-tuned ONNX int8
-- [ ] **Technologies / frameworks:** Vite, React, TypeScript, Transformers.js, ONNX Runtime Web, `optimum`/`transformers`/`datasets` (training)
+- [ ] **Technologies / frameworks:** Vite, React, TypeScript, Transformers.js, ONNX Runtime Web, `transformers`/`datasets`/`onnxruntime` (training)
 - [ ] **APIs / cloud services:** none at runtime (state this loudly — it is the headline)
 - [ ] **Existing code / assets:** open datasets + open pretrained backbone, listed by URL
 - [ ] **AI development tools used:** (e.g. Devin, opencode, Copilot) — must be honest

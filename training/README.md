@@ -9,47 +9,40 @@ there, so the notebook below is the supported path.
 prepare_data.py  →  finetune.py  →  export_onnx.py  →  eval.py  →  upload to HF
 ```
 
-1. **Get the data.** Easiest path (no accounts):
+1. **Get + normalize the data** (easiest path, no accounts):
    ```bash
-   python prepare_data.py --ph-preset --out data     # PH sources below
-   python prepare_data.py --ph-preset --bootstrap --out data   # + English volume
+   python prepare_data.py --ph-preset --bootstrap --out data
    ```
-   Sources (verified working):
+   `--ph-preset` pulls the public PH sets; `--bootstrap` adds English SMS Spam Collection
+   for volume. Sources (verified working):
    - `scottleechua/spam-and-marketing-sms` — GitHub raw CSV, **CC-BY-4.0**, PH, 5
      categories, ~2.2k usable text rows (830 spam).
    - `Henit007/henit11`, `Henit007/karannnn` — Hugging Face, PH telco SMS (~3.4k rows,
      includes real OTP/notification text).
-   - `ucirvine/sms_spam` — SMS Spam Collection (English, 5.5k) — use `--bootstrap`.
-   - Kaggle `bwandowando/philippine-spam-sms-messages` (~1.5k, needs Kaggle login) →
-     download the CSV and pass `--csv`.
+   - `ucirvine/sms_spam` — SMS Spam Collection (English, 5.5k) — `--bootstrap`.
+   - Kaggle `bwandowando/philippine-spam-sms-messages` (~1.5k) → download CSV → `--csv`.
    - Mendeley "SMS Phishing Dataset" (5,971; ham/spam/smishing) → download → `--csv`.
-   All sources just need a text-like and label-like column; they are auto-detected.
-   Rows with `<REDACTED>` text are skipped.
-2. **Normalize + split:**
+   Columns are auto-detected; rows with `<REDACTED>` text are skipped.
+2. **Fine-tune** (start small; swap backbone only if F1 < 0.95). Use a **PyTorch** backbone,
+   not the ONNX-only `Xenova/*` repo:
    ```bash
-   python prepare_data.py --csv ph_spam.csv --csv more.csv --out data
-   # or, to smoke-test the pipeline with the public SMS Spam Collection:
-   python prepare_data.py --bootstrap --out data
+   python finetune.py --model sentence-transformers/all-MiniLM-L6-v2 --data data --out model
    ```
-3. **Fine-tune** (start small; swap backbone only if F1 < 0.95):
-   ```bash
-   python finetune.py --model Xenova/all-MiniLM-L6-v2 --data data --out model
-   ```
-4. **Export + quantize to int8:**
+3. **Export + quantize to int8** (`torch.onnx`, no `optimum-cli`):
    ```bash
    python export_onnx.py --model-dir model --out onnx_out
    ```
-5. **Evaluate honestly** and copy the numbers into the top-level README:
+4. **Evaluate honestly** and copy the numbers into the top-level README:
    ```bash
    python eval.py --model-dir model --data data/test.csv
    ```
-6. **Publish** every file in `onnx_out/` to a public Hugging Face model repo, then set
+5. **Publish** every file in `onnx_out/` to a public Hugging Face model repo, then set
    `VITE_MODEL_ID=<user>/<repo>` in `.env` and rebuild the PWA.
 
 ## Install (Colab)
 
 ```bash
-pip install "transformers>=4.44" "datasets" "optimum[onnxruntime]" "onnxruntime" \
+pip install "transformers>=4.44" "datasets" "onnx" "onnxruntime" \
     scikit-learn accelerate
 ```
 

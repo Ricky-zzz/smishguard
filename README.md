@@ -71,10 +71,11 @@ The model is trained on public Philippine SMS datasets via `training/smishguard_
 
 ## Disclosures
 
-- **Models:** `Xenova/all-MiniLM-L6-v2` (or `jcblaise/roberta-tagalog-base`) fine-tuned by
+- **Models:** `sentence-transformers/all-MiniLM-L6-v2` (or `jcblaise/roberta-tagalog-base`)
+  fine-tuned by
   this project → int8 ONNX published on Hugging Face.
 - **Frameworks:** Vite, React, TypeScript, Transformers.js, ONNX Runtime Web; `transformers`,
-  `datasets`, `optimum`, `onnxruntime`, `scikit-learn` (training).
+  `datasets`, `onnxruntime`, `scikit-learn` (training).
 - **Cloud / APIs:** none used at runtime.
 - **Datasets:** public PH SMS datasets (see `training/prepare_data.py`).
 - **AI dev tools used:** _(list them here)_.
