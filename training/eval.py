@@ -8,6 +8,7 @@ README. Never inflate them (fake benchmarks = disqualification).
 
 import argparse
 import csv
+import os
 
 import numpy as np
 from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, classification_report, f1_score
@@ -19,6 +20,11 @@ def main():
     parser.add_argument("--model-dir", default="model")
     parser.add_argument("--data", default="data/test.csv")
     args = parser.parse_args()
+
+    if not os.path.isfile(os.path.join(args.model_dir, "config.json")):
+        raise SystemExit(
+            f"No trained model at '{args.model_dir}'. Run finetune.py first."
+        )
 
     texts, gold = [], []
     with open(args.data, newline="", encoding="utf-8") as fh:

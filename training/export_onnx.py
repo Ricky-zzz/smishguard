@@ -20,6 +20,13 @@ def main():
     parser.add_argument("--out", default="onnx_out")
     args = parser.parse_args()
 
+    config_path = os.path.join(args.model_dir, "config.json")
+    if not os.path.isfile(config_path):
+        raise SystemExit(
+            f"No trained model at '{args.model_dir}' (missing config.json).\n"
+            "Run finetune.py first, then run this in the same working directory."
+        )
+
     onnx_dir = os.path.join(args.out, "onnx")
     os.makedirs(onnx_dir, exist_ok=True)
 

@@ -105,7 +105,9 @@ def main():
 
     model.save_pretrained(args.out)
     tokenizer.save_pretrained(args.out)
-    print(f"Saved fine-tuned model to {args.out}")
+    saved = os.path.abspath(args.out)
+    print(f"Saved fine-tuned model to {saved}")
+    print("Files:", sorted(os.listdir(saved)))
 
 
 if __name__ == "__main__":
