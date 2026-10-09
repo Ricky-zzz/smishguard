@@ -88,9 +88,11 @@ def main():
             num_train_epochs=args.epochs,
             learning_rate=args.lr,
             eval_strategy="epoch",
-            save_strategy="no",
-            logging_steps=50,
-            load_best_model_at_end=False,
+            save_strategy="epoch",
+            save_total_limit=1,
+            load_best_model_at_end=True,
+            metric_for_best_model="f1",
+            greater_is_better=True,
             report_to="none",
         ),
         train_dataset=tokenized,
@@ -105,11 +107,18 @@ def main():
 
     trainer.train()
     print("Validation:", trainer.evaluate())
+    print("Best checkpoint:", trainer.state.best_model_checkpoint)
+    print("Best metric (f1):", trainer.state.best_metric)
 
-    model.save_pretrained(args.out)
+    best_ckpt = trainer.state.best_model_checkpoint
+    if best_ckpt:
+        best_model = AutoModelForSequenceClassification.from_pretrained(best_ckpt)
+        best_model.save_pretrained(args.out)
+    else:
+        model.save_pretrained(args.out)
     tokenizer.save_pretrained(args.out)
     saved = os.path.abspath(args.out)
-    print(f"Saved fine-tuned model to {saved}")
+    print(f"Saved best-checkpoint model to {saved}")
     print("Files:", sorted(os.listdir(saved)))
 
 
