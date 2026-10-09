@@ -23,7 +23,7 @@ const BRAND_RE =
   /\b(gcash|maya|paymaya|bpi|bdo|metrobank|landbank|unionbank|security bank|rcbc|chinabank|cebuana|palawan|mlhuillier|shopee|lazada|globe|smart|tnt|dito|sss|pag[-\s]?ibig|nbi|lto|dti|bfp|pnp)\b/i;
 const URGENCY_RE =
   /\b(urgent|immediately|now|expires?|expiring|suspended|deactivated|blocked|na[-\s]?block|locked|verify|i[-\s]?verify|last warning|final notice|act now|hurry)\b/i;
-const MONEY_RE = /(₱|\bphp\b|\bpeso|\bcash\b|\bpera\b|\b\d{3,}\b)/i;
+const MONEY_RE = /(₱|\bphp\b|\bpeso|\bcash\b|\bpera\b|\b\d{3,}\b|\b\d+(?:\.\d+)?\s*[km]\b)/i;
 const LOAN_RE =
   /\b(loan|utang|pautang|paloan|cash loan|sangla|sanglang|5[-\s/]?6|quick cash|instant cash)\b/i;
 const URL_SHORTENERS = 'bit\\.ly|tinyurl\\.com|t\\.co|goo\\.gl|is\\.gd|cutt\\.ly|shorturl\\.at';
@@ -67,7 +67,7 @@ function isSuspiciousUrl(url: string): boolean {
 }
 
 const RAFFLE_RE =
-  /\b(raffle|premyo|prize|winner|nanalo|panalo|congratulations|congrats|swert|jackpot|gcash promo)\b/i;
+  /\b(raffle|premyo|prize|winner|nanalo|panalo|panal[a-z]*|congratulations|congrats|swert|jackpot|gcash promo|win|won|claim|claimed)\b/i;
 
 
 export function detectSignals(text: string): Signal[] {
