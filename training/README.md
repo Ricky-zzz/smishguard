@@ -15,11 +15,11 @@ prepare_data.py  →  finetune.py  →  export_onnx.py  →  eval.py  →  uploa
    ```
    `--ph-preset` pulls the public PH sets; `--bootstrap` adds English SMS Spam Collection
    for volume. Sources (verified working):
-   - `scottleechua/spam-and-marketing-sms` — GitHub raw CSV, **CC-BY-4.0**, PH, 5
+   - `scottleechua/spam-and-marketing-sms` - GitHub raw CSV, **CC-BY-4.0**, PH, 5
      categories, ~2.2k usable text rows (830 spam).
-   - `Henit007/henit11`, `Henit007/karannnn` — Hugging Face, PH telco SMS (~3.4k rows,
+   - `Henit007/henit11`, `Henit007/karannnn` - Hugging Face, PH telco SMS (~3.4k rows,
      includes real OTP/notification text).
-   - `ucirvine/sms_spam` — SMS Spam Collection (English, 5.5k) — `--bootstrap`.
+   - `ucirvine/sms_spam` - SMS Spam Collection (English, 5.5k) - `--bootstrap`.
    - Kaggle `bwandowando/philippine-spam-sms-messages` (~1.5k) → download CSV → `--csv`.
    - Mendeley "SMS Phishing Dataset" (5,971; ham/spam/smishing) → download → `--csv`.
    Columns are auto-detected; rows with `<REDACTED>` text are skipped.

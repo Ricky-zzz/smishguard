@@ -1,11 +1,11 @@
 # SmishGuard
 
-**AppBuildersPH Hackathon 2026 entry — theme: Local AI**
+**AppBuildersPH Hackathon 2026 entry for the Local AI theme**
 
-An on-device detector for **Philippine SMS smishing** (scam / phishing texts). Paste a
-suspicious message and a small transformer — running entirely in your browser — returns a
-verdict and a Taglish explanation. After the first load the app makes **zero network
-calls**; it works in airplane mode.
+SmishGuard tells you whether a suspicious text message is a scam. Paste or share an SMS
+and a small AI model running entirely on your device checks it in seconds, explains why in
+simple Taglish, and can learn from your corrections. After the first load it needs no
+internet at all, so it works in airplane mode. Your message never leaves your phone.
 
 ## Why local?
 
@@ -34,7 +34,7 @@ npm run build     # typecheck + build to dist/ (creates the service worker)
 npm run preview   # serve the build at http://localhost:4173
 ```
 
-### For judges — recreating this project
+### For judges - recreating this project
 
 No manual model download and no API keys are required.
 
@@ -44,10 +44,10 @@ No manual model download and no API keys are required.
    [Hugging Face repo](https://huggingface.co/Irumachi/smishguard-minilm-v2) on first load,
    then all inference runs offline with zero network calls.
 4. To reproduce the *model weights and the eval numbers*, open
-   `training/smishguard_fixed.ipynb` in Google Colab (T4 GPU) and run all cells — it pulls
+   `training/smishguard_fixed.ipynb` in Google Colab (T4 GPU) and run all cells - it pulls
    the public PH datasets, fine-tunes, exports int8 ONNX, and prints the held-out metrics.
 
-Load the preview **once online** (so the model caches), then enable **airplane mode** —
+Load the preview **once online** (so the model caches), then enable **airplane mode** -
 everything still works.
 
 ## Deploy to Vercel (for the phone demo)
@@ -67,43 +67,43 @@ also gives you the HTTPS required for PWA install + service worker.
 
 ## How it works
 
-- **Detection** — a fine-tuned small encoder exported to int8 ONNX, run by
+- **Detection** - a fine-tuned small encoder exported to int8 ONNX, run by
   [Transformers.js](https://github.com/huggingface/transformers.js) inside a Web Worker on
   the **WASM** backend (`dtype: q8`). Model: [`Irumachi/smishguard-minilm-v2`](https://huggingface.co/Irumachi/smishguard-minilm-v2).
-- **Explanation** — deterministic rules/signals (unknown URL, OTP request, brand
+- **Explanation** - deterministic rules/signals (unknown URL, OTP request, brand
   impersonation, urgency, loan/raffle) rendered in Taglish. No LLM, no hallucination.
-- **Safety net** — if the model says "legit" but the text has a suspicious link plus scam
+- **Safety net** - if the model says "legit" but the text has a suspicious link plus scam
   signals (or a high non-ham probability with a hard signal), the verdict is escalated and
   labelled "via safety rules". Reputable domains such as `shopee.ph` are not treated as
   suspicious links.
-- **Neutral guard** — if the model says "scam" but the text has no scam markers at all
+- **Neutral guard** - if the model says "scam" but the text has no scam markers at all
   (no link, brand, OTP, urgency, loan, raffle), it shows "Hindi sigurado" instead of a
-  confident scam — so ordinary messages aren't falsely flagged.
-- **Learns from you, locally** — correct a verdict and the device remembers it (IndexedDB)
+  confident scam - so ordinary messages aren't falsely flagged.
+- **Learns from you, locally** - correct a verdict and the device remembers it (IndexedDB)
   and applies it to repeat/near-identical messages. Review or delete any correction in the
-  **Corrections** tab. A retrieval memory, not cloud, not on-device training — nothing
+  **Corrections** tab. A retrieval memory, not cloud, not on-device training - nothing
   leaves the phone.
-- **Offline** — a service worker precaches the app shell and caches the model on first
+- **Offline** - a service worker precaches the app shell and caches the model on first
   load (`vite-plugin-pwa`), so everything after that runs without a network.
-- **Proof panel** — a live network-call counter, inference latency, and corrections
+- **Proof panel** - a live network-call counter, inference latency, and corrections
   learned.
-- **Input without copy-paste** — on Android, share an SMS straight into the app
+- **Input without copy-paste** - on Android, share an SMS straight into the app
   (Web Share Target pre-fills the message); on any device, open the app with the message
   already copied and tap **"Gamitin ang na-copy kong message"**.
 
 The abstractions (`Detector`, `Explainer`, `Storage`, `NetworkProbe`, plus the
-`VerdictEngine` that composes rules + corrections) live behind interfaces — see
+`VerdictEngine` that composes rules + corrections) live behind interfaces - see
 `architecture.md`.
 
 ## Project documents
 
-- [`requirements.md`](./requirements.md) — what we must accomplish
-- [`architecture.md`](./architecture.md) — structure and abstractions
-- [`deliverables.md`](./deliverables.md) — submission checklist
-- [`DISCLOSURES.md`](./DISCLOSURES.md) — full technical + model disclosure
-- [`Q&A.md`](./Q&A.md) — judge Q&A: hard questions and concrete answers
-- [`AGENTS.md`](./AGENTS.md) — instructions for AI coding agents
-- [`training/README.md`](./training/README.md) — how to reproduce the model
+- [`requirements.md`](./requirements.md) - what we must accomplish
+- [`architecture.md`](./architecture.md) - structure and abstractions
+- [`deliverables.md`](./deliverables.md) - submission checklist
+- [`DISCLOSURES.md`](./DISCLOSURES.md) - full technical + model disclosure
+- [`Q&A.md`](./Q&A.md) - judge Q&A: hard questions and concrete answers
+- [`AGENTS.md`](./AGENTS.md) - instructions for AI coding agents
+- [`training/README.md`](./training/README.md) - how to reproduce the model
 
 ## Training
 
@@ -136,7 +136,7 @@ otp   [    1   4    0 ]
 scam  [    8   1  269 ]
 ```
 
-Note: macro-F1 is dragged down by the very small `otp_phish` class (5 test examples) —
+Note: macro-F1 is dragged down by the very small `otp_phish` class (5 test examples) -
 class imbalance, not a real regression. The product-critical boundary (scam vs ham) is
 strong: scam precision 0.96 / recall 0.97, ham 0.98 / 0.98. 8 scam texts were missed on
 the test set; the rules safety net catches obvious ones (suspicious link + scam signals).
@@ -153,7 +153,7 @@ tools, existing assets) is in **[`DISCLOSURES.md`](./DISCLOSURES.md)**. In short
 
 - **Model:** `sentence-transformers/all-MiniLM-L6-v2` fine-tuned (best-epoch checkpoint) →
   int8 ONNX at [`Irumachi/smishguard-minilm-v2`](https://huggingface.co/Irumachi/smishguard-minilm-v2).
-- **Runtime:** zero cloud — inference runs in-browser via Transformers.js on the WASM `q8`
+- **Runtime:** zero cloud - inference runs in-browser via Transformers.js on the WASM `q8`
   backend; the model is fetched once from Hugging Face and cached by the service worker.
 - **Data:** public PH SMS sets (scottleechua CC-BY-4.0, Henit007 HF) + UCI SMS Spam
   Collection + a small hand-curated seed set authored during the hackathon.

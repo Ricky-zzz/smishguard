@@ -1,4 +1,4 @@
-# Disclosures & technical stack — SmishGuard
+# Disclosures & technical stack - SmishGuard
 
 This is the complete, evidence-based disclosure for the AppBuildersPH Hackathon 2026
 submission (theme: **Local AI**). Every item below is verifiable in this repository.
@@ -49,7 +49,7 @@ the first load.
 | Source | Type | License/notes |
 |---|---|---|
 | `scottleechua/spam-and-marketing-sms` (`text-messages.csv`) | ~8.9k PH SMS, 5 categories | **CC-BY-4.0**; streamed from GitHub in `prepare_data.py` |
-| `Henit007/henit11`, `Henit007/karannnn` | PH telco SMS (GoTyme, BDO, GOMO…) | Public HF datasets; unsigned personal uploads — provenance noted |
+| `Henit007/henit11`, `Henit007/karannnn` | PH telco SMS (GoTyme, BDO, GOMO…) | Public HF datasets; unsigned personal uploads - provenance noted |
 | `ucirvine/sms_spam` | SMS Spam Collection, 5.5k (English, volume) | Public UCI/HF dataset |
 | **Hand-curated seed set (ours)** | 10 labeled examples authored during the hackathon, representing scarce classes + demo messages (`SEED_ROWS`) | Authored by the team, disclosed |
 
@@ -70,9 +70,9 @@ by training.
 
 ## 7. AI development tools (required disclosure)
 
-- **opencode** (AI coding assistant) — used for scaffolding, implementation, debugging, and
+- **opencode** (AI coding assistant) - used for scaffolding, implementation, debugging, and
   documentation throughout the build.
-- **Google Colab** — used as the GPU training environment.
+- **Google Colab** - used as the GPU training environment.
 - **AI-assisted development is allowed** by the hackathon rules; the above is disclosed per
   the rules. All product decisions and the final code are owned by the team.
 
@@ -80,7 +80,7 @@ by training.
 
 - **Open models** used solely as starting points: `sentence-transformers/all-MiniLM-L6-v2`.
 - **Open datasets**: listed in §5.
-- **Open-source libraries**: listed in §3–§4.
+- **Open-source libraries**: listed in §3-§4.
 - **Everything else was produced during the hackathon**: the application code, the
   fine-tuned weights, the exported ONNX, the PWA config, the inference/explainer rules, the
   UI, the app icons, and the documentation. No pre-existing application code was reused.
@@ -90,7 +90,7 @@ by training.
 
 - Repo (public): `https://github.com/Ricky-zzz/smishguard`
 - Model: `https://huggingface.co/Irumachi/smishguard-minilm-v2`
-- Recreate inference: `npm install && npm run dev` — the app pulls the public model on first
+- Recreate inference: `npm install && npm run dev` - the app pulls the public model on first
   load and runs fully offline after that.
 - Recreate training + eval: `training/smishguard_fixed.ipynb` (Colab, T4), reproduces data →
   finetune → parity-checked export → eval.

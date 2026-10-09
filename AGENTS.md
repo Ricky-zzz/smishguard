@@ -1,12 +1,12 @@
-# AGENTS.md — SmishGuard
+# AGENTS.md - SmishGuard
 
 Project instructions for AI coding agents working in this repository.
 
 ## Read first, every session
 
-1. `requirements.md` — what we must accomplish (the contract).
-2. `architecture.md` — how it is structured and the abstractions to follow.
-3. `deliverables.md` — the finish line and submission checklist.
+1. `requirements.md` - what we must accomplish (the contract).
+2. `architecture.md` - how it is structured and the abstractions to follow.
+3. `deliverables.md` - the finish line and submission checklist.
 
 Then check `README.md` for build/test commands.
 
@@ -48,7 +48,7 @@ Before implementing anything, verify it is consistent with `requirements.md` and
 - Build: `npm run build`
 - Lint: `npm run lint`
 - Typecheck: `npm run typecheck`
-- Training: see `training/README` — runs on Google Colab, not local Python 3.14.
+- Training: see `training/README` - runs on Google Colab, not local Python 3.14.
 
 Run lint + typecheck + build before declaring any feature complete.
 

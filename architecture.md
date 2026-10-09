@@ -1,4 +1,4 @@
-# architecture.md — SmishGuard
+# architecture.md - SmishGuard
 
 How the program is structured and the abstractions it follows. Read together with
 `requirements.md` (what) and `deliverables.md` (finish line). See `AGENTS.md` for the
@@ -77,7 +77,7 @@ interface Detector {
 }
 ```
 - Impl A: `TransformersDetector` (default, WASM q8).
-- Impl B: `MockDetector` (rules-only) — lets UI/CI run before the model exists.
+- Impl B: `MockDetector` (rules-only) - lets UI/CI run before the model exists.
 - Swapping MiniLM ↔ RoBERTa-tagalog = changing the model id, not the interface.
 
 ### 3.2 Explainer
@@ -87,7 +87,7 @@ interface Explainer {
   explain(text: string, result: DetectorResult): Promise<Reason[]>;
 }
 ```
-- Impl: `RuleExplainer` — a small signals table (URL present, OTP request, brand name,
+- Impl: `RuleExplainer` - a small signals table (URL present, OTP request, brand name,
   urgency / loan / raffle words) produces the reasons. **No LLM, no generation** (FR4).
 
 ### 3.3 Storage
@@ -122,7 +122,7 @@ class VerdictEngine {
 }
 ```
 - Applies, in order: (1) a stored **correction** (exact / token-Jaccard ≥ 0.8) → `correction`;
-  (2) the model; (3) the **rules safety net** — a suspicious link + scam signals, or
+  (2) the model; (3) the **rules safety net** - a suspicious link + scam signals, or
   P(non-ham) ≥ 0.6 with a hard signal, on a `ham` verdict → `rules`; otherwise `model`. Implements FR9/FR10 without touching the UI's
   `Detector` abstraction.
 
@@ -159,7 +159,7 @@ class VerdictEngine {
 - **Why corrections via memory, not fine-tuning?** On-device gradient training is
   research-grade in 2026 and would blow the time budget. A local retrieval memory (FR9)
   adapts to the user's corrections instantly, stays private, and is honestly described as
-  memory — not "the model re-trained".
+  memory - not "the model re-trained".
 - **Why precache the model?** So the "airplane mode" demo is genuine (FR6, NFR4).
 - **Why no backend?** The whole point is that nothing leaves the device (§5 of reqs).
 
