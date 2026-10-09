@@ -111,29 +111,29 @@ Honest held-out results from `training/eval.py` (748 test messages the model nev
 
 | Metric | Value |
 |---|---|
-| Accuracy | **0.9706** |
+| Accuracy | **0.9719** |
 | Weighted F1 | **0.97** |
-| Macro-F1 | 0.87 (see note) |
+| Macro-F1 | 0.8905 (see note) |
 | Test set size | 748 |
 
 | Class | Precision | Recall | F1 | Support |
 |---|---|---|---|---|
-| ham | 0.98 | 0.97 | 0.98 | 465 |
-| otp_phish | 0.57 | 0.80 | 0.67 | 5 |
+| ham | 0.98 | 0.98 | 0.98 | 465 |
+| otp_phish | 0.67 | 0.80 | 0.73 | 5 |
 | scam | 0.96 | 0.97 | 0.97 | 278 |
 
 Confusion matrix (rows true, cols predicted):
 
 ```
          ham  otp  scam
-ham   [  453   2   10 ]
+ham   [  454   1   10 ]
 otp   [    1   4    0 ]
 scam  [    8   1  269 ]
 ```
 
 Note: macro-F1 is dragged down by the very small `otp_phish` class (5 test examples) —
 class imbalance, not a real regression. The product-critical boundary (scam vs ham) is
-strong: scam precision 0.96 / recall 0.97, ham 0.98 / 0.97. 8 scam texts were missed on
+strong: scam precision 0.96 / recall 0.97, ham 0.98 / 0.98. 8 scam texts were missed on
 the test set; the rules safety net catches obvious ones (suspicious link + scam signals).
 
 Trained on public PH SMS data (`--ph-preset`: scottleechua CC-BY-4.0 + Henit007 HF sets),
