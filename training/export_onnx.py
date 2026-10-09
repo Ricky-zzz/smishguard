@@ -122,11 +122,18 @@ def main():
     tokenizer.save_pretrained(args.out)
     model.config.save_pretrained(args.out)
 
-    from onnxruntime.quantization import QuantType, quantize_dynamic
-
     quant_path = os.path.join(onnx_dir, "model_quantized.onnx")
-    quantize_dynamic(fp32_path, quant_path, weight_type=QuantType.QInt8)
-    print("Wrote", quant_path)
+    try:
+        from onnxruntime.quantization import QuantType, quantize_dynamic
+
+        quantize_dynamic(fp32_path, quant_path, weight_type=QuantType.QInt8)
+        print("Wrote", quant_path)
+    except Exception as exc:
+        print(f"int8 quantization failed ({type(exc).__name__}: {str(exc)[:120]})")
+        import shutil
+
+        shutil.copyfile(fp32_path, quant_path)
+        print("Falling back: shipped fp32 weights as model_quantized.onnx")
     print()
     print("Files to upload:")
     for root, _, files in os.walk(args.out):
@@ -141,6 +148,7 @@ def inline_weights(onnx_path):
     import onnx
 
     proto = onnx.load(onnx_path)
+    del proto.graph.value_info[:]
     onnx.save_model(proto, onnx_path, save_as_external_data=False)
     for suffix in (".data", ".weights.pkl"):
         try:
