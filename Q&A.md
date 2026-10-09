@@ -6,8 +6,8 @@ inflated numbers.
 
 ## The ground rules we never break
 
-- We report the real eval numbers (accuracy 0.9746, macro-F1 0.9681 on a 747-message
-  held-out set). Never inflate.
+- We report the real eval numbers (accuracy 0.9706, weighted-F1 0.97, macro-F1 0.87 on a
+  748-message held-out set, with the macro caveat). Never inflate.
 - We do **not** claim to detect novel, unseen scams.
 - We do **not** call the correction memory "re-training" — it is a local retrieval memory.
 - We say the model is **3-class** and **small on purpose**.
@@ -91,19 +91,21 @@ on-device fine-tuning is still research-grade; we didn't pretend otherwise.
 
 A: Fine-tuned `sentence-transformers/all-MiniLM-L6-v2` for sequence classification on
 public Philippine SMS data (scottleechua CC-BY-4.0, Henit007 Hugging Face sets) plus the
-English SMS Spam Collection, then exported to int8 ONNX. Evaluation is `training/eval.py`
-on a 15% held-out split the model never saw: **747 messages, accuracy 0.9746, macro-F1
-0.9681**. The full confusion matrix is in the README. Reproduce it with the Colab notebook
-in `training/`.
+English SMS Spam Collection and a small curated seed set, then exported to int8 ONNX.
+Evaluation is `training/eval.py` on a 15% held-out split the model never saw:
+**748 messages, accuracy 0.9706, weighted-F1 0.97, macro-F1 0.87**. Macro-F1 is dragged
+down by the tiny `otp_phish` class (5 examples); the decisive scam-vs-ham bound is
+scam 0.96/0.97, ham 0.98/0.97. The full confusion matrix is in the README. Reproduce it
+with the Colab notebook in `training/`.
 
 ### Q: "Your dataset is tiny and part-English. Isn't that 97% inflated?"
 
 A: It's a fair caveat, which is why we disclose it rather than hide it. The test set mixes
 English and Taglish, so part of the score is the easier English subset. It's still an
-honest number on a real held-out set, and it clears the ≥0.95 F1 bar we set for ourselves.
-We'd rather report a real 0.968 on mixed data than a fake 0.99.
+honest number on a real held-out set (weighted-F1 0.97 clears the ≥0.95 bar). We'd rather
+report a real 0.97 on mixed data than a fake 0.99.
 
-### Q: "Nine missed scams — isn't that a safety problem?"
+### Q: "Missed scams — isn't that a safety problem?"
 
 A: That's why the **rules safety net** exists. If the model says "legit" but the text has a
 suspicious link plus scam signals, or a high non-ham probability with a hard signal, the

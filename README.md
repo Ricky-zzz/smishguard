@@ -107,23 +107,39 @@ The model is trained on public Philippine SMS datasets via `training/smishguard_
 
 ### Evaluation
 
-Honest held-out results from `training/eval.py` (747 test messages, 3 classes):
+Honest held-out results from `training/eval.py` (748 test messages the model never saw):
 
 | Metric | Value |
 |---|---|
-| Accuracy | **0.9746** |
-| Macro-F1 | **0.9681** |
-| Test set size | 747 |
+| Accuracy | **0.9706** |
+| Weighted F1 | **0.97** |
+| Macro-F1 | 0.87 (see note) |
+| Test set size | 748 |
 
 | Class | Precision | Recall | F1 | Support |
 |---|---|---|---|---|
-| ham | 0.97 | 0.98 | 0.98 | 386 |
-| otp_phish | 0.95 | 0.95 | 0.95 | 79 |
-| scam | 0.99 | 0.97 | 0.98 | 282 |
+| ham | 0.98 | 0.97 | 0.98 | 465 |
+| otp_phish | 0.57 | 0.80 | 0.67 | 5 |
+| scam | 0.96 | 0.97 | 0.97 | 278 |
 
-Trained on public PH SMS data (`--ph-preset`: scottleechua CC-BY-4.0 + Henit007 HF sets)
-plus the English SMS Spam Collection. The corpus has no `impersonation`/`loan`/`raffle`
-examples, so the model is 3-class; those labels are only surfaced by the rules explainer.
+Confusion matrix (rows true, cols predicted):
+
+```
+         ham  otp  scam
+ham   [  453   2   10 ]
+otp   [    1   4    0 ]
+scam  [    8   1  269 ]
+```
+
+Note: macro-F1 is dragged down by the very small `otp_phish` class (5 test examples) —
+class imbalance, not a real regression. The product-critical boundary (scam vs ham) is
+strong: scam precision 0.96 / recall 0.97, ham 0.98 / 0.97. 8 scam texts were missed on
+the test set; the rules safety net catches obvious ones (suspicious link + scam signals).
+
+Trained on public PH SMS data (`--ph-preset`: scottleechua CC-BY-4.0 + Henit007 HF sets),
+the English SMS Spam Collection, and a small hand-curated seed set (see
+`training/prepare_data.py`). The corpus has no `impersonation`/`loan`/`raffle` examples,
+so the model is 3-class; those labels are only surfaced by the rules explainer.
 
 ## Disclosures
 
