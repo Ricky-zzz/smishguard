@@ -23,6 +23,7 @@ import csv
 import io
 import os
 import random
+import re
 import urllib.request
 
 LABELS = ["ham", "scam", "impersonation", "otp_phish", "loan", "raffle"]
@@ -39,7 +40,7 @@ LABEL_MAP = {
     "gov": "ham",
     "ads": "ham",
     "ad": "ham",
-    "otp": "otp_phish",
+    "otp": "ham",
     "otp_phish": "otp_phish",
     "phishing": "otp_phish",
     "smishing": "scam",
@@ -54,6 +55,12 @@ LABEL_MAP = {
     "raffle": "raffle",
     "prize": "raffle",
 }
+
+# Source `otp` means a genuine OTP/notification message, not phishing. Only a
+# message already labeled scam/spam that asks for an OTP/code becomes otp_phish.
+OTP_PHISH_RE = re.compile(
+    r"(?i)\b(otp|one[\s-]?time|verification code|verify code|auth code|6[\s-]?digit|\bpin\b|\bcode\b)\b"
+)
 
 PH_PRESET_URLS = [
     "https://raw.githubusercontent.com/scottleechua/data/main/spam-and-marketing-sms/text-messages.csv",
@@ -88,6 +95,8 @@ def records_to_rows(records):
         if not text or text.upper() in ("<REDACTED>", "REDACTED"):
             continue
         label = normalize_label(rec.get(label_key))
+        if label == "scam" and OTP_PHISH_RE.search(text):
+            label = "otp_phish"
         if label:
             rows.append((text, label))
     return rows

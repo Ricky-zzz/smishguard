@@ -106,9 +106,11 @@ We'd rather report a real 0.968 on mixed data than a fake 0.99.
 ### Q: "Nine missed scams — isn't that a safety problem?"
 
 A: That's why the **rules safety net** exists. If the model says "legit" but the text has a
-URL plus scam signals, or a high scam probability, the verdict is escalated and marked
-"via safety rules" — so obvious scams can't silently pass just because the model was
-uncertain. For a warning tool, recall matters more than a few false alarms.
+suspicious link plus scam signals, or a high non-ham probability with a hard signal, the
+verdict is escalated and marked "via safety rules" — so an uncertain model does not
+silently pass an obvious scam. Reputable domains do not trigger the link escalation. For a
+warning tool, recall matters more than a few false alarms, but borderline verdicts are
+shown cautiously rather than as certain scams.
 
 ### Q: "What if the model fails to load at all?"
 

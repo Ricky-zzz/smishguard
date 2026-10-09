@@ -12,7 +12,7 @@ export interface Verdict {
   note?: string;
 }
 
-export const NON_HAM_THRESHOLD = 0.4;
+export const NON_HAM_THRESHOLD = 0.6;
 
 export class VerdictEngine {
   private detector: Detector;
@@ -39,16 +39,28 @@ export class VerdictEngine {
 
     const result = await this.detector.classify(text);
     const signals = detectSignals(text);
-    const hasUrl = signals.some((s) => s.kind === 'url');
+    const hasSuspiciousUrl = signals.some((s) => s.kind === 'suspicious_url');
     const risky = signals.some(
-      (s) => s.kind === 'otp_request' || s.kind === 'brand' || s.kind === 'urgency'
+      (s) =>
+        s.kind === 'otp_request' ||
+        s.kind === 'brand' ||
+        s.kind === 'urgency' ||
+        s.kind === 'loan' ||
+        s.kind === 'raffle'
+    );
+    const hardSignal = signals.some(
+      (s) =>
+        s.kind === 'suspicious_url' ||
+        s.kind === 'urgency' ||
+        s.kind === 'loan' ||
+        s.kind === 'raffle'
     );
     const nonHam = LABELS.filter((l) => l !== 'ham').reduce(
       (sum, l) => sum + result.scores[l],
       0
     );
 
-    if (result.label === 'ham' && hasUrl && risky) {
+    if (result.label === 'ham' && hasSuspiciousUrl && risky) {
       const label: Label = signals.some((s) => s.kind === 'otp_request')
         ? 'otp_phish'
         : 'scam';
@@ -60,7 +72,7 @@ export class VerdictEngine {
       );
     }
 
-    if (result.label === 'ham' && nonHam >= NON_HAM_THRESHOLD) {
+    if (result.label === 'ham' && nonHam >= NON_HAM_THRESHOLD && hardSignal) {
       const label = this.topNonHam(result.scores);
       return this.escalate(
         result,

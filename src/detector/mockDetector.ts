@@ -31,6 +31,9 @@ export class MockDetector implements Detector {
         case 'urgency':
           scores.scam += s.weight;
           break;
+        case 'suspicious_url':
+          scores.scam += s.weight * 1.25;
+          break;
         case 'money':
           scores.scam += s.weight;
           scores.loan += s.weight * 0.5;

@@ -122,8 +122,8 @@ class VerdictEngine {
 }
 ```
 - Applies, in order: (1) a stored **correction** (exact / token-Jaccard ≥ 0.8) → `correction`;
-  (2) the model; (3) the **rules safety net** — URL + scam signals, or P(non-ham) ≥ 0.4, on
-  a `ham` verdict → `rules`; otherwise `model`. Implements FR9/FR10 without touching the UI's
+  (2) the model; (3) the **rules safety net** — a suspicious link + scam signals, or
+  P(non-ham) ≥ 0.6 with a hard signal, on a `ham` verdict → `rules`; otherwise `model`. Implements FR9/FR10 without touching the UI's
   `Detector` abstraction.
 
 ## 4. Module map

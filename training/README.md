@@ -49,7 +49,9 @@ pip install "transformers>=4.44" "datasets" "onnx" "onnxruntime" \
 ## Label schema
 
 `ham, scam, impersonation, otp_phish, loan, raffle`. Binary `ham/scam` is the minimum
-acceptable model; `prepare_data.py` maps common source labels onto this schema.
+acceptable model; `prepare_data.py` maps common source labels onto this schema. A source
+label of `otp` means a genuine OTP/notification message and is mapped to `ham`; only a
+message already labeled scam/spam that asks for an OTP/code becomes `otp_phish`.
 
 ## Honesty
 

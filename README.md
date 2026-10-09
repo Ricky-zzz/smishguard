@@ -59,9 +59,10 @@ also gives you the HTTPS required for PWA install + service worker.
   the **WASM** backend (`dtype: q8`). Model: [`Irumachi/smishguard-minilm`](https://huggingface.co/Irumachi/smishguard-minilm).
 - **Explanation** — deterministic rules/signals (unknown URL, OTP request, brand
   impersonation, urgency, loan/raffle) rendered in Taglish. No LLM, no hallucination.
-- **Safety net** — if the model says "legit" but the text has a URL + scam signals (or a
-  high scam probability), the verdict is escalated and labelled "via safety rules", so
-  obvious scams can't silently pass.
+- **Safety net** — if the model says "legit" but the text has a suspicious link plus scam
+  signals (or a high non-ham probability with a hard signal), the verdict is escalated and
+  labelled "via safety rules". Reputable domains such as `shopee.ph` are not treated as
+  suspicious links.
 - **Learns from you, locally** — correct a verdict and the device remembers it (IndexedDB)
   and applies it to repeat/near-identical messages. A retrieval memory, not cloud, not
   on-device training — nothing leaves the phone.

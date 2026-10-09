@@ -1,5 +1,6 @@
 export type SignalKind =
   | 'url'
+  | 'suspicious_url'
   | 'otp_request'
   | 'brand'
   | 'urgency'
@@ -25,8 +26,49 @@ const URGENCY_RE =
 const MONEY_RE = /(₱|\bphp\b|\bpeso|\bcash\b|\bpera\b|\b\d{3,}\b)/i;
 const LOAN_RE =
   /\b(loan|utang|pautang|paloan|cash loan|sangla|sanglang|5[-\s/]?6|quick cash|instant cash)\b/i;
+const URL_SHORTENERS = 'bit\\.ly|tinyurl\\.com|t\\.co|goo\\.gl|is\\.gd|cutt\\.ly|shorturl\\.at';
+const SUSPICIOUS_TLDS = 'top|xyz|info|link|club|online|site|icu|buzz|click|vip|win|live';
+const REPUTABLE_SUFFIXES = [
+  'shopee.ph',
+  'lazada.com.ph',
+  'bpi.com.ph',
+  'bdo.com.ph',
+  'metrobank.com.ph',
+  'unionbankph.com',
+  'landbank.com',
+  'gcash.com',
+  'maya.ph',
+  'paymaya.com',
+  'globe.com.ph',
+  'smart.com.ph',
+  'gov.ph'
+];
+
+function hostOf(url: string): string {
+  const match = url
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .match(/^[a-z0-9.-]+/);
+  return match ? match[0] : '';
+}
+
+function isReputableHost(host: string): boolean {
+  return REPUTABLE_SUFFIXES.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
+}
+
+function isSuspiciousUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  const host = hostOf(url);
+  if (host && isReputableHost(host)) return false;
+  if (new RegExp(`\\.(${SUSPICIOUS_TLDS})\\b`).test(lower)) return true;
+  if (new RegExp(`(?:^|\\b)(?:${URL_SHORTENERS})(?:\\/|$)`).test(lower)) return true;
+  return /(otp|verify|verification|claim|prize|login|secure|account|unlock)/.test(host);
+}
+
 const RAFFLE_RE =
   /\b(raffle|premyo|prize|winner|nanalo|panalo|congratulations|congrats|swert|jackpot|gcash promo)\b/i;
+
 
 export function detectSignals(text: string): Signal[] {
   const signals: Signal[] = [];
@@ -36,9 +78,17 @@ export function detectSignals(text: string): Signal[] {
     signals.push({
       kind: 'url',
       match: url[0],
-      weight: 0.35,
-      reason: `May link na "${url[0]}" — huwag i-click.`
+      weight: 0.2,
+      reason: `May link na "${url[0]}" — tiyaking kilala at opisyal ang sender bago i-click.`
     });
+    if (isSuspiciousUrl(url[0])) {
+      signals.push({
+        kind: 'suspicious_url',
+        match: url[0],
+        weight: 0.45,
+        reason: `Kahina-hinala ang link na "${url[0]}" — huwag i-click o magbigay ng OTP.`
+      });
+    }
   }
 
   const otp = text.match(OTP_RE);
@@ -57,7 +107,7 @@ export function detectSignals(text: string): Signal[] {
       kind: 'brand',
       match: brand[0],
       weight: 0.3,
-      reason: `Ginagamit ang pangalan ng ${brand[0]} para magpapanggap.`
+      reason: `Binanggit ang ${brand[0]} — tiyaking opisyal ang sender bago mag-click o magbigay ng detalye.`
     });
   }
 

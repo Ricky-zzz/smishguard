@@ -137,8 +137,9 @@ export default function App() {
   };
 
   const lowConfidence = verdict ? verdict.label === 'ham' && verdict.confidence < 0.55 : false;
+  const lowConfidenceScam = verdict ? verdict.label !== 'ham' && verdict.confidence < 0.65 : false;
   const verdictClass = verdict
-    ? lowConfidence
+    ? lowConfidence || lowConfidenceScam
       ? 'verdict low'
       : LABEL_CLASS[verdict.label]
     : 'verdict';
@@ -211,7 +212,9 @@ export default function App() {
           <div className={verdictClass}>
             <strong>
               {isScam
-                ? 'MALAMANG SCAM'
+                ? lowConfidenceScam
+                  ? 'Posibleng scam — hindi sigurado'
+                  : 'MALAMANG SCAM'
                 : lowConfidence
                   ? 'Hindi sigurado'
                   : 'Walang nakitang senyales ng scam'}
@@ -222,6 +225,9 @@ export default function App() {
             </span>
             {lowConfidence && (
               <span>Mababa ang kumpiyansa — walang malinaw na senyales.</span>
+            )}
+            {lowConfidenceScam && (
+              <span>Mababa ang kumpiyansa — huwag munang mag-click o magbigay ng OTP.</span>
             )}
           </div>
 

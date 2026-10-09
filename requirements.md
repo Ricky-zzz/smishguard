@@ -46,9 +46,11 @@ qualifies (in-scope list includes *Local embeddings*, *Edge AI*, *Privacy-preser
 - **FR9 — Local auto-correction.** On the next check, a stored correction (exact or
   ~similar message, token-Jaccard ≥ 0.8) is applied and the verdict is marked
   "via your correction". This is a local memory, **not** on-device training (§6).
-- **FR10 — Rules safety net.** If the model says `ham` but the text has a URL **and**
-  scam signals (OTP/brand/urgency), or P(non-ham) ≥ 0.4, the verdict is escalated and
-  marked "via safety rules". Guarantees obvious scams cannot silently pass.
+- **FR10 — Rules safety net.** If the model says `ham` but the text has a **suspicious**
+  link **and** scam signals (OTP/brand/urgency/loan/raffle), or P(non-ham) ≥ 0.6 with a hard
+  signal (suspicious link/urgency/loan/raffle), the verdict is escalated and marked
+  "via safety rules". Reputable sender domains and mere brand/OTP mentions alone do not
+  trigger it.
 
 ## 3. Non-functional requirements
 
