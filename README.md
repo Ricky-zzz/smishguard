@@ -21,14 +21,23 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
-Without a trained model the app runs a **rules-only demo detector** (fully functional, for
-UI + proof-panel testing). To use the real model, train it and set `VITE_MODEL_ID`:
+The real model is the default (`Irumachi/smishguard-minilm`). Set `VITE_MODEL_ID` in `.env`
+to override it (see `.env.example`).
 
-```bash
-cp .env.example .env
-# VITE_MODEL_ID=your-username/smishguard-minilm
-npm run build
-```
+## Deploy to Vercel (for the phone demo)
+
+The build is static (`dist/`), so it deploys as a normal Vite project on **Vercel**, which
+also gives you the HTTPS required for PWA install + service worker.
+
+1. Push the repo to GitHub (done).
+2. In Vercel: **Import project** → select `smishguard` → framework **Vite** (auto),
+   build `npm run build`, output `dist`. No env vars needed.
+3. **Phone demo (offline):**
+   - On your phone, open the Vercel URL **once over Wi-Fi** and wait for the pill to say
+     `Engine ready` (this downloads + caches the model and registers the service worker).
+   - Tap **Add to Home Screen** (install the PWA).
+   - Turn on **airplane mode** → open the installed app → paste a scam SMS → it still
+     detects, counter stays at 0.
 
 ## How it works
 

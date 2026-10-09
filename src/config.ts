@@ -1,4 +1,5 @@
-export const MODEL_ID: string = import.meta.env.VITE_MODEL_ID ?? '';
+export const MODEL_ID: string =
+  import.meta.env.VITE_MODEL_ID ?? 'Irumachi/smishguard-minilm';
 
 export const APP_NAME = 'SmishGuard';
 
