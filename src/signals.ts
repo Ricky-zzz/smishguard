@@ -16,7 +16,7 @@ export interface Signal {
 }
 
 const URL_RE =
-  /(https?:\/\/|\bwww\.|\b[a-z0-9-]+\.(top|xyz|info|link|club|online|site|icu|buzz|click|vip|win|live|ph)\b)/i;
+  /\b(?:https?:\/\/[^\s"'<>]+|www\.[^\s"'<>]+|[a-z0-9-]+\.(?:top|xyz|info|link|club|online|site|icu|buzz|click|vip|win|live)\b)/i;
 const OTP_RE =
   /\b(otp|one[-\s]?time\s*(pin|password|code)?|verification code|verify code|auth code|6[-\s]?digit|pin)\b/i;
 const BRAND_RE =
