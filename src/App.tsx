@@ -106,6 +106,12 @@ export default function App() {
     setHistory(await storage.all());
   };
 
+  const clearCorrections = async () => {
+    await corrections.clear();
+    setCorrectionCount(0);
+    if (text.trim()) await check();
+  };
+
   const verdictClass = verdict ? LABEL_CLASS[verdict.label] : 'verdict';
   const isScam = verdict ? verdict.label !== 'ham' : false;
 
@@ -240,6 +246,11 @@ export default function App() {
           The model downloads once on first load, then is cached. After that all
           inference and corrections stay on your device — try airplane mode.
         </p>
+        {correctionCount > 0 && (
+          <button className="ghost" onClick={clearCorrections}>
+            Clear my corrections ({correctionCount})
+          </button>
+        )}
       </section>
 
       <section className="card">
