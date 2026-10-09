@@ -101,7 +101,8 @@ def check_parity(tokenizer, model, fp32_path, input_names):
     import onnxruntime as ort
 
     encoded = tokenizer(
-        PARITY_SAMPLES, return_tensors="pt", truncation=True, max_length=128
+        PARITY_SAMPLES, return_tensors="pt", truncation=True, max_length=128,
+        padding=True,
     )
     with torch.no_grad():
         torch_logits = model(
