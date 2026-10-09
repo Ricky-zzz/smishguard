@@ -151,6 +151,12 @@ button:disabled {
   color: #bbf7d0;
 }
 
+.verdict.low {
+  background: #3a2f12;
+  border: 1px solid #b45309;
+  color: #fde68a;
+}
+
 .verdict strong {
   font-size: 1.15rem;
 }

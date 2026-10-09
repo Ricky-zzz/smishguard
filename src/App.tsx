@@ -70,6 +70,16 @@ export default function App() {
     if (!engine || !trimmed) return;
     setBusy(true);
     setError(null);
+    if (trimmed.length < 8) {
+      setBusy(false);
+      setError('Masyadong maikli — i-paste ang buong SMS na natanggap mo.');
+      return;
+    }
+    if (trimmed.length > 500) {
+      setBusy(false);
+      setError('Mas mahaba pa sa 500 characters — i-paste lang ang SMS.');
+      return;
+    }
     try {
       const { result, ms } = await probe.measure(() => engine.judge(trimmed));
       setVerdict(result);
@@ -112,7 +122,12 @@ export default function App() {
     if (text.trim()) await check();
   };
 
-  const verdictClass = verdict ? LABEL_CLASS[verdict.label] : 'verdict';
+  const lowConfidence = verdict ? verdict.label === 'ham' && verdict.confidence < 0.55 : false;
+  const verdictClass = verdict
+    ? lowConfidence
+      ? 'verdict low'
+      : LABEL_CLASS[verdict.label]
+    : 'verdict';
   const isScam = verdict ? verdict.label !== 'ham' : false;
 
   const scoreRows = useMemo(() => {
@@ -143,7 +158,9 @@ export default function App() {
           placeholder="I-paste dito ang suspicious na text message..."
           onChange={(e) => setText(e.target.value)}
           rows={4}
+          maxLength={500}
         />
+        <span className="fineprint">{text.length}/500</span>
 
         <div className="examples">
           {EXAMPLE_MESSAGES.map((ex) => (
@@ -173,11 +190,20 @@ export default function App() {
       {verdict && (
         <section className="card">
           <div className={verdictClass}>
-            <strong>{isScam ? 'MALAMANG SCAM' : 'Mukhang legit'}</strong>
+            <strong>
+              {isScam
+                ? 'MALAMANG SCAM'
+                : lowConfidence
+                  ? 'Hindi sigurado'
+                  : 'Walang nakitang senyales ng scam'}
+            </strong>
             <span>
               {LABEL_TEXT[verdict.label]} ·{' '}
               {(verdict.confidence * 100).toFixed(1)}% confident
             </span>
+            {lowConfidence && (
+              <span>Mababa ang kumpiyansa — walang malinaw na senyales.</span>
+            )}
           </div>
 
           <div className="row">
