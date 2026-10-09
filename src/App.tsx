@@ -46,6 +46,9 @@ export default function App() {
   useEffect(() => {
     probe.start();
 
+    const shared = new URLSearchParams(window.location.search).get('text');
+    if (shared) setText(shared);
+
     const onStatus = (s: LoadStatus) =>
       setStatusMsg(`Loading model: ${s.phase} ${Math.round(s.progress)}%`);
 
@@ -63,6 +66,17 @@ export default function App() {
     const timer = window.setInterval(() => setNetCount(probe.count()), 400);
     return () => window.clearInterval(timer);
   }, []);
+
+  const useClipboard = async () => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const copied = await navigator.clipboard.readText();
+        if (copied && copied.trim()) setText(copied.trim());
+      }
+    } catch {
+      /* clipboard read requires permission / gesture; ignore */
+    }
+  };
 
   const check = async () => {
     const engine = engineRef.current;
@@ -161,6 +175,11 @@ export default function App() {
           maxLength={500}
         />
         <span className="fineprint">{text.length}/500</span>
+        {!text && (
+          <button className="ghost" onClick={useClipboard}>
+            Gamitin ang na-copy kong message
+          </button>
+        )}
 
         <div className="examples">
           {EXAMPLE_MESSAGES.map((ex) => (

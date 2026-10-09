@@ -25,8 +25,9 @@ qualifies (in-scope list includes *Local embeddings*, *Edge AI*, *Privacy-preser
 
 ## 2. Functional requirements
 
-- **FR1 — Input.** User can paste a message, or (stretch, Android only) share text into
-  the app via Web Share Target. No automatic inbox reading (see §6 non-goals).
+- **FR1 — Input.** User can paste a message; on Android also **share** an SMS straight into
+  the app (Web Share Target pre-fills it), or tap **"Gamitin ang na-copy kong message"** to
+  read the clipboard. No automatic inbox reading (see §6 non-goals).
 - **FR2 — Detect.** On submit, the app classifies the text into one of:
   `ham`, `scam`, `impersonation`, `otp_phish`, `loan`, `raffle`. Binary
   `scam`/`ham` is the minimum acceptable model; the multi-class set is the target.

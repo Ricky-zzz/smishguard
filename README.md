@@ -54,7 +54,11 @@ also gives you the HTTPS required for PWA install + service worker.
   on-device training — nothing leaves the phone.
 - **Offline** — a service worker precaches the app shell and caches the model on first
   load (`vite-plugin-pwa`), so everything after that runs without a network.
-- **Proof panel** — a live network-call counter, inference latency, and corrections learned.
+- **Proof panel** — a live network-call counter, inference latency, and corrections
+  learned.
+- **Input without copy-paste** — on Android, share an SMS straight into the app
+  (Web Share Target pre-fills the message); on any device, open the app with the message
+  already copied and tap **"Gamitin ang na-copy kong message"**.
 
 The abstractions (`Detector`, `Explainer`, `Storage`, `NetworkProbe`, plus the
 `VerdictEngine` that composes rules + corrections) live behind interfaces — see
