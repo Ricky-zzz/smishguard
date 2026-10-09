@@ -2,17 +2,16 @@
 
     python export_onnx.py --model-dir model --out onnx_out
 
-Uses torch.onnx directly (no optimum-cli, which breaks on Colab's diffusers/
-huggingface_hub conflict). Produces onnx_out/ with config.json, tokenizer files,
-and onnx/model_quantized.onnx (the file Transformers.js loads for dtype 'q8').
+No optimum-cli (breaks on Colab's diffusers/huggingface_hub conflict). Produces
+onnx_out/ with config.json, tokenizer files, and onnx/model_quantized.onnx.
 
-Two guardrails, learned the hard way:
-1. The model is loaded with eager attention. The default SDPA path does not trace
-   correctly with the legacy ONNX exporter and silently produces a graph that
-   outputs near-constant logits for every input.
-2. After export, the ONNX graph is run on real samples and its logits are compared
-   against PyTorch. If they diverge, the script fails INSTEAD of writing a broken
-   model. Never upload without a passing parity gate.
+Guardrails, learned the hard way:
+1. Eager attention (SDPA/flash do not trace).
+2. The new torch.export-based exporter (dynamo) is tried first; it handles the
+   data-dependent masking in modern transformers that the legacy exporter bakes
+   into constants.
+3. Every export is validated by running the ONNX graph on real samples and
+   comparing logits against PyTorch. Divergence > tolerance -> FAIL, never upload.
 """
 
 import argparse
@@ -30,6 +29,10 @@ PARITY_SAMPLES = [
 ]
 
 PARITY_TOLERANCE = 1e-3
+
+
+class ParityError(RuntimeError):
+    pass
 
 
 def main():
@@ -61,23 +64,46 @@ def main():
     input_names = list(sample.keys())
     inputs = tuple(sample[name] for name in input_names)
 
-    dynamic_axes = {name: {0: "batch", 1: "sequence"} for name in input_names}
-    dynamic_axes["logits"] = {0: "batch"}
-
     fp32_path = os.path.join(onnx_dir, "model.onnx")
-    export_kwargs = dict(
-        input_names=input_names,
-        output_names=["logits"],
-        dynamic_axes=dynamic_axes,
-        opset_version=14,
-    )
-    try:
-        torch.onnx.export(model, inputs, fp32_path, dynamo=False, **export_kwargs)
-    except TypeError:
-        torch.onnx.export(model, inputs, fp32_path, **export_kwargs)
-    print("Wrote", fp32_path)
 
-    check_parity(tokenizer, model, fp32_path, input_names)
+    exported = False
+
+    try:
+        dynamic_shapes = {name: {0: "batch", 1: "sequence"} for name in input_names}
+        dynamic_shapes["logits"] = {0: "batch"}
+        torch.onnx.export(
+            model,
+            inputs,
+            fp32_path,
+            dynamo=True,
+            opset_version=14,
+            dynamic_shapes=dynamic_shapes,
+        )
+        check_parity(tokenizer, model, fp32_path, input_names)
+        print("Export OK (new torch.export exporter, dynamo=True)")
+        exported = True
+    except (TypeError, ValueError, ParityError) as exc:
+        print(f"new-exporter path failed ({type(exc).__name__}) — trying legacy")
+        try:
+            os.remove(fp32_path)
+        except OSError:
+            pass
+
+    if not exported:
+        dynamic_axes = {name: {0: "batch", 1: "sequence"} for name in input_names}
+        dynamic_axes["logits"] = {0: "batch"}
+        torch.onnx.export(
+            model,
+            inputs,
+            fp32_path,
+            input_names=input_names,
+            output_names=["logits"],
+            dynamic_axes=dynamic_axes,
+            opset_version=14,
+        )
+        check_parity(tokenizer, model, fp32_path, input_names)
+        print("Export OK (legacy exporter)")
+        exported = True
 
     tokenizer.save_pretrained(args.out)
     model.config.save_pretrained(args.out)
@@ -101,7 +127,10 @@ def check_parity(tokenizer, model, fp32_path, input_names):
     import onnxruntime as ort
 
     encoded = tokenizer(
-        PARITY_SAMPLES, return_tensors="pt", truncation=True, max_length=128,
+        PARITY_SAMPLES,
+        return_tensors="pt",
+        truncation=True,
+        max_length=128,
         padding=True,
     )
     with torch.no_grad():
@@ -117,16 +146,17 @@ def check_parity(tokenizer, model, fp32_path, input_names):
     }
     missing = set(input_names) - set(ort_inputs)
     if missing:
-        raise SystemExit(f"ONNX graph is missing inputs: {sorted(missing)}")
+        raise ParityError(f"ONNX graph missing inputs: {sorted(missing)}")
     onnx_logits = sess.run(["logits"], ort_inputs)[0]
 
     max_diff = float(np.abs(torch_logits - onnx_logits).max())
-    print(f"Parity check: max |torch - onnx| = {max_diff:.2e} over {len(PARITY_SAMPLES)} samples")
-    if max_diff > PARITY_TOLERANCE:
-        raise SystemExit(
+    print(
+        f"Parity check: max |torch - onnx| = {max_diff:.2e} over {len(PARITY_SAMPLES)} samples"
+    )
+    if np.isnan(max_diff) or max_diff > PARITY_TOLERANCE:
+        raise ParityError(
             f"PARITY FAILED (diff {max_diff:.2e} > {PARITY_TOLERANCE}). "
-            "The exported ONNX graph does not match PyTorch — do NOT upload it. "
-            "Re-export with eager attention (attn_implementation='eager')."
+            "The exported ONNX does not match PyTorch — do NOT upload it."
         )
     print("Parity check passed.")
 
