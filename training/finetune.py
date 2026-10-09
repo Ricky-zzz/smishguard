@@ -88,6 +88,7 @@ def main():
             save_strategy="no",
             logging_steps=50,
             load_best_model_at_end=False,
+            report_to="none",
         ),
         train_dataset=tokenized,
         eval_dataset=val_tok,
