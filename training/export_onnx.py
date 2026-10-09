@@ -5,13 +5,14 @@
 No optimum-cli (breaks on Colab's diffusers/huggingface_hub conflict). Produces
 onnx_out/ with config.json, tokenizer files, and onnx/model_quantized.onnx.
 
-Guardrails, learned the hard way:
-1. Eager attention (SDPA/flash do not trace).
-2. The new torch.export-based exporter (dynamo) is tried first; it handles the
-   data-dependent masking in modern transformers that the legacy exporter bakes
-   into constants.
-3. Every export is validated by running the ONNX graph on real samples and
-   comparing logits against PyTorch. Divergence > tolerance -> FAIL, never upload.
+Guardrails (each learned the hard way):
+- Eager attention: SDPA/flash-attention do not trace correctly.
+- torch.export (new exporter, torch 2.9+) is used FIRST; its `dynamic_shapes`
+  keys must be INPUT NAMES ONLY (not outputs like 'logits').
+- opset 18 (LayerNormalization needs >=17; avoids failing version-conversion).
+- External-data weights are re-saved inline so Transformers.js gets one file.
+- Every export is validated: ONNX vs PyTorch logits on real samples. Divergence
+  > tolerance -> FAIL loudly, never upload.
 """
 
 import argparse
@@ -68,27 +69,36 @@ def main():
 
     exported = False
 
+    # Strategy 1: new torch.export-based exporter (torch 2.9+).
     try:
         dynamic_shapes = {name: {0: "batch", 1: "sequence"} for name in input_names}
-        dynamic_shapes["logits"] = {0: "batch"}
         torch.onnx.export(
             model,
             inputs,
             fp32_path,
             dynamo=True,
-            opset_version=14,
+            opset_version=18,
             dynamic_shapes=dynamic_shapes,
         )
+        inline_weights(fp32_path)
         check_parity(tokenizer, model, fp32_path, input_names)
         print("Export OK (new torch.export exporter, dynamo=True)")
         exported = True
     except Exception as exc:
-        print(f"new-exporter path failed ({type(exc).__name__}: {exc}) — trying legacy")
+        print(
+            f"new-exporter path failed ({type(exc).__name__}: {str(exc)[:180]}) — trying legacy"
+        )
         try:
             os.remove(fp32_path)
         except OSError:
             pass
+        for suffix in (".data", ".weights.pkl"):
+            try:
+                os.remove(fp32_path + suffix)
+            except OSError:
+                pass
 
+    # Strategy 2: legacy exporter (last resort; parity gate will judge it).
     if not exported:
         dynamic_axes = {name: {0: "batch", 1: "sequence"} for name in input_names}
         dynamic_axes["logits"] = {0: "batch"}
@@ -101,6 +111,7 @@ def main():
             dynamic_axes=dynamic_axes,
             opset_version=14,
         )
+        inline_weights(fp32_path)
         try:
             check_parity(tokenizer, model, fp32_path, input_names)
         except ParityError as exc:
@@ -124,6 +135,13 @@ def main():
     print()
     print("Next: upload every file above to a public Hugging Face model repo,")
     print("then set VITE_MODEL_ID=<user>/<repo> in .env and rebuild.")
+
+
+def inline_weights(onnx_path):
+    import onnx
+
+    proto = onnx.load(onnx_path)
+    onnx.save_model(proto, onnx_path, save_as_external_data=False)
 
 
 def check_parity(tokenizer, model, fp32_path, input_names):
@@ -159,9 +177,7 @@ def check_parity(tokenizer, model, fp32_path, input_names):
     if np.isnan(max_diff) or max_diff > PARITY_TOLERANCE:
         raise ParityError(
             f"PARITY FAILED (diff {max_diff:.2e} > {PARITY_TOLERANCE}). "
-            "The exported ONNX does not match PyTorch — do NOT upload it. "
-            "If the newer exporter was unavailable (onnxscript missing), install it with "
-            "'pip install onnxscript' and re-run export."
+            "The exported ONNX does not match PyTorch — do NOT upload it."
         )
     print("Parity check passed.")
 
