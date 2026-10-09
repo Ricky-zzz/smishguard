@@ -8,6 +8,11 @@ import { IndexedDbStorage, HistoryEntry } from './storage/indexedDbStorage';
 import { CorrectionStore } from './storage/correctionStore';
 import probe from './proof/countingNetworkProbe';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 let detectorPromise: Promise<Detector> | null = null;
 const explainer = new RuleExplainer();
 const storage = new IndexedDbStorage();
@@ -29,6 +34,7 @@ const SOURCE_TEXT: Record<VerdictSource, string> = {
 };
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'check' | 'history'>('check');
   const [text, setText] = useState('');
   const [status, setStatus] = useState<'loading' | 'ready'>('loading');
   const [statusMsg, setStatusMsg] = useState('Starting local engine...');
@@ -41,6 +47,8 @@ export default function App() {
   const [correctionCount, setCorrectionCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
   const engineRef = useRef<VerdictEngine | null>(null);
 
   useEffect(() => {
@@ -63,9 +71,27 @@ export default function App() {
     storage.all().then(setHistory);
     corrections.all().then((c) => setCorrectionCount(c.length));
 
+    const onInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    const onInstalled = () => setInstalled(true);
+    window.addEventListener('beforeinstallprompt', onInstallPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+
     const timer = window.setInterval(() => setNetCount(probe.count()), 400);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('beforeinstallprompt', onInstallPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
   }, []);
+
+  const installApp = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    setInstallPrompt(null);
+  };
 
   const useClipboard = async () => {
     try {
@@ -155,180 +181,208 @@ export default function App() {
 
   return (
     <div className="app">
-      <header>
-        <h1>{APP_NAME}</h1>
-        <p className="tagline">
-          On-device Philippine smishing detector. Nothing leaves this phone.
-        </p>
+      <header className="app-header">
+        <div>
+          <h1>{APP_NAME}</h1>
+          <p className="tagline">
+            On-device Philippine smishing detector. Nothing leaves this phone.
+          </p>
+        </div>
+        {!installed && installPrompt && (
+          <button className="ghost install-btn" onClick={installApp}>
+            Install app
+          </button>
+        )}
       </header>
 
-      <section className="card">
-        <div className="row">
-          <span className={`pill ${status}`}>
-            {status === 'loading' ? statusMsg : `Engine ready — ${modelDesc}`}
-          </span>
-        </div>
+      <nav className="tabs">
+        <button
+          className={activeTab === 'check' ? 'tab active' : 'tab'}
+          onClick={() => setActiveTab('check')}
+        >
+          Suriin
+        </button>
+        <button
+          className={activeTab === 'history' ? 'tab active' : 'tab'}
+          onClick={() => setActiveTab('history')}
+        >
+          Listahan ({history.length})
+        </button>
+      </nav>
 
-        <textarea
-          value={text}
-          placeholder="I-paste dito ang suspicious na text message..."
-          onChange={(e) => setText(e.target.value)}
-          rows={4}
-          maxLength={500}
-        />
-        <span className="fineprint">{text.length}/500</span>
-        {!text && (
-          <button className="ghost" onClick={useClipboard}>
-            Gamitin ang na-copy kong message
-          </button>
-        )}
+      {activeTab === 'check' && (
+        <>
+          <section className="card">
+            <div className="row">
+              <span className={`pill ${status}`}>
+                {status === 'loading' ? statusMsg : `Engine ready — ${modelDesc}`}
+              </span>
+            </div>
 
-        <div className="examples">
-          {EXAMPLE_MESSAGES.map((ex) => (
-            <button
-              key={ex.title}
-              className="ghost"
-              onClick={() => setText(ex.text)}
-            >
-              {ex.title}
-            </button>
-          ))}
-        </div>
+            <textarea
+              value={text}
+              placeholder="I-paste dito ang suspicious na text message..."
+              onChange={(e) => setText(e.target.value)}
+              rows={4}
+              maxLength={500}
+            />
+            <span className="fineprint">{text.length}/500</span>
+            {!text && (
+              <button className="ghost" onClick={useClipboard}>
+                Gamitin ang na-copy kong message
+              </button>
+            )}
 
-        <div className="row">
-          <button
-            className="primary"
-            disabled={busy || status !== 'ready' || !text.trim()}
-            onClick={check}
-          >
-            {busy ? 'Sinusuri...' : 'Suriin locally'}
-          </button>
-        </div>
+            <div className="examples">
+              {EXAMPLE_MESSAGES.map((ex) => (
+                <button
+                  key={ex.title}
+                  className="ghost"
+                  onClick={() => setText(ex.text)}
+                >
+                  {ex.title}
+                </button>
+              ))}
+            </div>
 
-        {error && <p className="error">{error}</p>}
-      </section>
+            <div className="row">
+              <button
+                className="primary"
+                disabled={busy || status !== 'ready' || !text.trim()}
+                onClick={check}
+              >
+                {busy ? 'Sinusuri...' : 'Suriin locally'}
+              </button>
+            </div>
 
-      {verdict && (
-        <section className="card">
-          <div className={verdictClass}>
-            <strong>
-              {neutral
-                ? 'Hindi sigurado'
-                : isScam
-                  ? lowConfidenceScam
-                    ? 'Posibleng scam — hindi sigurado'
-                    : 'MALAMANG SCAM'
-                  : lowConfidence
+            {error && <p className="error">{error}</p>}
+          </section>
+
+          {verdict && (
+            <section className="card">
+              <div className={verdictClass}>
+                <strong>
+                  {neutral
                     ? 'Hindi sigurado'
-                    : 'Walang nakitang senyales ng scam'}
-            </strong>
-            <span>
-              {neutral
-                ? 'Walang malinaw na senyales'
-                : `${LABEL_TEXT[verdict.label]} · ${(verdict.confidence * 100).toFixed(1)}% confident`}
-            </span>
-            {neutral && (
-              <span>Hindi sigurado ang modelo — walang senyales na mapagkakatiwalaan.</span>
-            )}
-            {lowConfidence && (
-              <span>Mababa ang kumpiyansa — walang malinaw na senyales.</span>
-            )}
-            {lowConfidenceScam && (
-              <span>Mababa ang kumpiyansa — huwag munang mag-click o magbigay ng OTP.</span>
-            )}
-          </div>
-
-          <div className="row">
-            <span className={`source source-${verdict.source}`}>
-              via {SOURCE_TEXT[verdict.source]}
-            </span>
-            {verdict.note && <span className="note">{verdict.note}</span>}
-          </div>
-
-          <ul className="reasons">
-            {reasons.map((r, i) => (
-              <li key={i}>{r.text}</li>
-            ))}
-          </ul>
-
-          <div className="scores">
-            {scoreRows.map(([label, score]) => (
-              <div key={label} className="score-row">
-                <span>{LABEL_TEXT[label as keyof typeof LABEL_TEXT]}</span>
-                <div className="bar">
-                  <div
-                    className="bar-fill"
-                    style={{ width: `${Math.round(score * 100)}%` }}
-                  />
-                </div>
+                    : isScam
+                      ? lowConfidenceScam
+                        ? 'Posibleng scam — hindi sigurado'
+                        : 'MALAMANG SCAM'
+                      : lowConfidence
+                        ? 'Hindi sigurado'
+                        : 'Walang nakitang senyales ng scam'}
+                </strong>
+                <span>
+                  {neutral
+                    ? 'Walang malinaw na senyales'
+                    : `${LABEL_TEXT[verdict.label]} · ${(verdict.confidence * 100).toFixed(1)}% confident`}
+                </span>
+                {neutral && (
+                  <span>Hindi sigurado ang modelo — walang senyales na mapagkakatiwalaan.</span>
+                )}
+                {lowConfidence && (
+                  <span>Mababa ang kumpiyansa — walang malinaw na senyales.</span>
+                )}
+                {lowConfidenceScam && (
+                  <span>Mababa ang kumpiyansa — huwag munang mag-click o magbigay ng OTP.</span>
+                )}
               </div>
-            ))}
-          </div>
 
-          <div className="row">
-            <button className="ghost" onClick={save}>
-              I-save sa listahan
-            </button>
-            {isScam ? (
-              <button className="ghost" onClick={() => correct('ham')}>
-                Mali — legit ito
-              </button>
-            ) : (
-              <button className="ghost" onClick={() => correct('scam')}>
-                Scam ito — hindi na-flag
+              <div className="row">
+                <span className={`source source-${verdict.source}`}>
+                  via {SOURCE_TEXT[verdict.source]}
+                </span>
+                {verdict.note && <span className="note">{verdict.note}</span>}
+              </div>
+
+              <ul className="reasons">
+                {reasons.map((r, i) => (
+                  <li key={i}>{r.text}</li>
+                ))}
+              </ul>
+
+              <div className="scores">
+                {scoreRows.map(([label, score]) => (
+                  <div key={label} className="score-row">
+                    <span>{LABEL_TEXT[label as keyof typeof LABEL_TEXT]}</span>
+                    <div className="bar">
+                      <div
+                        className="bar-fill"
+                        style={{ width: `${Math.round(score * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="row">
+                <button className="ghost" onClick={save}>
+                  I-save sa listahan
+                </button>
+                {isScam ? (
+                  <button className="ghost" onClick={() => correct('ham')}>
+                    Mali — legit ito
+                  </button>
+                ) : (
+                  <button className="ghost" onClick={() => correct('scam')}>
+                    Scam ito — hindi na-flag
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
+
+          <section className="card">
+            <h2>Proof panel</h2>
+            <div className="proof">
+              <div className="proof-item">
+                <span className="proof-num">{netCount}</span>
+                <span className="proof-label">network calls since ready</span>
+              </div>
+              <div className="proof-item">
+                <span className="proof-num">
+                  {latency === null ? '—' : `${latency}ms`}
+                </span>
+                <span className="proof-label">last inference</span>
+              </div>
+              <div className="proof-item">
+                <span className="proof-num">{correctionCount}</span>
+                <span className="proof-label">local corrections learned</span>
+              </div>
+            </div>
+            <p className="fineprint">
+              The model downloads once on first load, then is cached. After that all
+              inference and corrections stay on your device — try airplane mode.
+            </p>
+            {correctionCount > 0 && (
+              <button className="ghost" onClick={clearCorrections}>
+                Clear my corrections ({correctionCount})
               </button>
             )}
-          </div>
-        </section>
+          </section>
+        </>
       )}
 
-      <section className="card">
-        <h2>Proof panel</h2>
-        <div className="proof">
-          <div className="proof-item">
-            <span className="proof-num">{netCount}</span>
-            <span className="proof-label">network calls since ready</span>
-          </div>
-          <div className="proof-item">
-            <span className="proof-num">
-              {latency === null ? '—' : `${latency}ms`}
-            </span>
-            <span className="proof-label">last inference</span>
-          </div>
-          <div className="proof-item">
-            <span className="proof-num">{correctionCount}</span>
-            <span className="proof-label">local corrections learned</span>
-          </div>
-        </div>
-        <p className="fineprint">
-          The model downloads once on first load, then is cached. After that all
-          inference and corrections stay on your device — try airplane mode.
-        </p>
-        {correctionCount > 0 && (
-          <button className="ghost" onClick={clearCorrections}>
-            Clear my corrections ({correctionCount})
-          </button>
-        )}
-      </section>
-
-      <section className="card">
-        <h2>Listahan ({history.length})</h2>
-        {history.length === 0 && <p className="fineprint">Wala pa.</p>}
-        <ul className="history">
-          {history.map((h) => (
-            <li key={h.id} className={h.label === 'ham' ? 'hist-ham' : 'hist-scam'}>
-              <div>
-                <strong>{LABEL_TEXT[h.label]}</strong>
-                <span> · {new Date(h.at).toLocaleString()}</span>
-                <p>{h.text}</p>
-              </div>
-              <button className="ghost" onClick={() => removeEntry(h.id)}>
-                x
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {activeTab === 'history' && (
+        <section className="card">
+          <h2>Listahan ({history.length})</h2>
+          {history.length === 0 && <p className="fineprint">Wala pa.</p>}
+          <ul className="history">
+            {history.map((h) => (
+              <li key={h.id} className={h.label === 'ham' ? 'hist-ham' : 'hist-scam'}>
+                <div>
+                  <strong>{LABEL_TEXT[h.label]}</strong>
+                  <span> · {new Date(h.at).toLocaleString()}</span>
+                  <p>{h.text}</p>
+                </div>
+                <button className="ghost" onClick={() => removeEntry(h.id)}>
+                  x
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
