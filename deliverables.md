@@ -31,7 +31,7 @@ reviewable in the public repo **as of the code freeze**. See `requirements.md` f
 ## 4. The disclosures
 
 - [ ] **Models:** backbone `sentence-transformers/all-MiniLM-L6-v2` + our fine-tuned int8
-      ONNX (`Irumachi/smishguard-minilm`)
+      ONNX (`Irumachi/smishguard-minilm-v2`)
 - [ ] **Technologies / frameworks:** Vite, React, TypeScript, Transformers.js, ONNX Runtime Web, `transformers`/`datasets`/`onnxruntime` (training)
 - [ ] **APIs / cloud services:** none at runtime (state this loudly — it is the headline)
 - [ ] **Existing code / assets:** open datasets + open pretrained backbone, listed by URL

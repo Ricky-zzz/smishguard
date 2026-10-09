@@ -23,7 +23,7 @@ npm install       # 1. install dependencies
 npm run dev       # 2. run the dev server -> http://localhost:5173
 ```
 
-The real model is the default (`Irumachi/smishguard-minilm`) and downloads once on first
+The real model is the default (`Irumachi/smishguard-minilm-v2`) and downloads once on first
 load, then runs fully offline. To override it, set `VITE_MODEL_ID` in `.env` (see
 `.env.example`).
 
@@ -41,10 +41,10 @@ No manual model download and no API keys are required.
 1. `npm install`.
 2. `npm run dev` (or `npm run build && npm run preview`).
 3. Open the local URL. The app downloads the fine-tuned model from the public
-   [Hugging Face repo](https://huggingface.co/Irumachi/smishguard-minilm) on first load,
+   [Hugging Face repo](https://huggingface.co/Irumachi/smishguard-minilm-v2) on first load,
    then all inference runs offline with zero network calls.
 4. To reproduce the *model weights and the eval numbers*, open
-   `training/smishguard_colab.ipynb` in Google Colab (T4 GPU) and run all cells — it pulls
+   `training/smishguard_fixed.ipynb` in Google Colab (T4 GPU) and run all cells — it pulls
    the public PH datasets, fine-tunes, exports int8 ONNX, and prints the held-out metrics.
 
 Load the preview **once online** (so the model caches), then enable **airplane mode** —
@@ -69,7 +69,7 @@ also gives you the HTTPS required for PWA install + service worker.
 
 - **Detection** — a fine-tuned small encoder exported to int8 ONNX, run by
   [Transformers.js](https://github.com/huggingface/transformers.js) inside a Web Worker on
-  the **WASM** backend (`dtype: q8`). Model: [`Irumachi/smishguard-minilm`](https://huggingface.co/Irumachi/smishguard-minilm).
+  the **WASM** backend (`dtype: q8`). Model: [`Irumachi/smishguard-minilm-v2`](https://huggingface.co/Irumachi/smishguard-minilm-v2).
 - **Explanation** — deterministic rules/signals (unknown URL, OTP request, brand
   impersonation, urgency, loan/raffle) rendered in Taglish. No LLM, no hallucination.
 - **Safety net** — if the model says "legit" but the text has a suspicious link plus scam
@@ -102,7 +102,7 @@ The abstractions (`Detector`, `Explainer`, `Storage`, `NetworkProbe`, plus the
 
 ## Training
 
-The model is trained on public Philippine SMS datasets via `training/smishguard_colab.ipynb`
+The model is trained on public Philippine SMS datasets via `training/smishguard_fixed.ipynb`
 (Google Colab, free T4). See [`training/README.md`](./training/README.md).
 
 ### Evaluation
@@ -145,7 +145,7 @@ so the model is 3-class; those labels are only surfaced by the rules explainer.
 
 - **Models:** `sentence-transformers/all-MiniLM-L6-v2` fine-tuned for sequence
   classification → int8 ONNX published at
-  [`Irumachi/smishguard-minilm`](https://huggingface.co/Irumachi/smishguard-minilm).
+  [`Irumachi/smishguard-minilm-v2`](https://huggingface.co/Irumachi/smishguard-minilm-v2).
 - **Frameworks:** Vite, React, TypeScript, Transformers.js, ONNX Runtime Web; `transformers`,
   `datasets`, `onnxruntime`, `scikit-learn` (training).
 - **Cloud / APIs:** none used at runtime.
