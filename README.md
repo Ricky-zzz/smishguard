@@ -1,11 +1,11 @@
 # SmishGuard
 
+**AppBuildersPH Hackathon 2026 entry — theme: Local AI**
+
 An on-device detector for **Philippine SMS smishing** (scam / phishing texts). Paste a
 suspicious message and a small transformer — running entirely in your browser — returns a
 verdict and a Taglish explanation. After the first load the app makes **zero network
 calls**; it works in airplane mode.
-
-Built for **AppBuildersPH Hackathon 2026** (theme: *Local AI*).
 
 ## Why local?
 
@@ -14,15 +14,28 @@ text to the cloud to "check if it's a scam" means uploading the exact secrets th
 wants to a third party. SmishGuard runs the model on your device, so the message and the
 verdict never leave the phone, it works with no connectivity, and checking costs nothing.
 
-## Quick start
+## Installation
+
+Requirements: Node.js 18+ and npm.
 
 ```bash
-npm install
-npm run dev      # http://localhost:5173
+npm install       # 1. install dependencies
+npm run dev       # 2. run the dev server -> http://localhost:5173
 ```
 
-The real model is the default (`Irumachi/smishguard-minilm`). Set `VITE_MODEL_ID` in `.env`
-to override it (see `.env.example`).
+The real model is the default (`Irumachi/smishguard-minilm`) and downloads once on first
+load, then runs fully offline. To override it, set `VITE_MODEL_ID` in `.env` (see
+`.env.example`).
+
+Production build + offline test:
+
+```bash
+npm run build     # typecheck + build to dist/ (creates the service worker)
+npm run preview   # serve the build at http://localhost:4173
+```
+
+Load the preview **once online** (so the model caches), then enable **airplane mode** —
+everything still works.
 
 ## Deploy to Vercel (for the phone demo)
 
