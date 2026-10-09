@@ -34,6 +34,19 @@ npm run build     # typecheck + build to dist/ (creates the service worker)
 npm run preview   # serve the build at http://localhost:4173
 ```
 
+### For judges — recreating this project
+
+No manual model download and no API keys are required.
+
+1. `npm install`.
+2. `npm run dev` (or `npm run build && npm run preview`).
+3. Open the local URL. The app downloads the fine-tuned model from the public
+   [Hugging Face repo](https://huggingface.co/Irumachi/smishguard-minilm) on first load,
+   then all inference runs offline with zero network calls.
+4. To reproduce the *model weights and the eval numbers*, open
+   `training/smishguard_colab.ipynb` in Google Colab (T4 GPU) and run all cells — it pulls
+   the public PH datasets, fine-tunes, exports int8 ONNX, and prints the held-out metrics.
+
 Load the preview **once online** (so the model caches), then enable **airplane mode** —
 everything still works.
 
