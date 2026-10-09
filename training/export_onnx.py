@@ -142,6 +142,11 @@ def inline_weights(onnx_path):
 
     proto = onnx.load(onnx_path)
     onnx.save_model(proto, onnx_path, save_as_external_data=False)
+    for suffix in (".data", ".weights.pkl"):
+        try:
+            os.remove(onnx_path + suffix)
+        except OSError:
+            pass
 
 
 def check_parity(tokenizer, model, fp32_path, input_names):
@@ -168,7 +173,19 @@ def check_parity(tokenizer, model, fp32_path, input_names):
     missing = set(input_names) - set(ort_inputs)
     if missing:
         raise ParityError(f"ONNX graph missing inputs: {sorted(missing)}")
-    onnx_logits = sess.run(["logits"], ort_inputs)[0]
+
+    out_names = [o.name for o in sess.get_outputs()]
+    results = sess.run(out_names, ort_inputs)
+    onnx_logits = None
+    for r in results:
+        a = np.asarray(r)
+        if a.ndim == 2 and a.shape[-1] == torch_logits.shape[-1]:
+            onnx_logits = a
+            break
+    if onnx_logits is None:
+        raise ParityError(
+            f"Could not identify a logits output among: {out_names}"
+        )
 
     max_diff = float(np.abs(torch_logits - onnx_logits).max())
     print(
