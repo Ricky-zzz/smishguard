@@ -10,6 +10,7 @@ export interface Verdict {
   scores: Record<Label, number>;
   source: VerdictSource;
   note?: string;
+  neutral?: boolean;
 }
 
 export const NON_HAM_THRESHOLD = 0.6;
@@ -59,6 +60,15 @@ export class VerdictEngine {
       (sum, l) => sum + result.scores[l],
       0
     );
+
+    if (result.label !== 'ham' && !hasSuspiciousUrl && !risky) {
+      return {
+        ...result,
+        source: 'rules',
+        neutral: true,
+        note: 'Walang nakitang malinaw na senyales ng scam sa mensahe.'
+      };
+    }
 
     if (result.label === 'ham' && hasSuspiciousUrl && risky) {
       const label: Label = signals.some((s) => s.kind === 'otp_request')

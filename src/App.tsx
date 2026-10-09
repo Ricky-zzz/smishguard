@@ -136,10 +136,11 @@ export default function App() {
     if (text.trim()) await check();
   };
 
+  const neutral = verdict?.neutral ?? false;
   const lowConfidence = verdict ? verdict.label === 'ham' && verdict.confidence < 0.55 : false;
   const lowConfidenceScam = verdict ? verdict.label !== 'ham' && verdict.confidence < 0.65 : false;
   const verdictClass = verdict
-    ? lowConfidence || lowConfidenceScam
+    ? neutral || lowConfidence || lowConfidenceScam
       ? 'verdict low'
       : LABEL_CLASS[verdict.label]
     : 'verdict';
@@ -211,18 +212,24 @@ export default function App() {
         <section className="card">
           <div className={verdictClass}>
             <strong>
-              {isScam
-                ? lowConfidenceScam
-                  ? 'Posibleng scam — hindi sigurado'
-                  : 'MALAMANG SCAM'
-                : lowConfidence
-                  ? 'Hindi sigurado'
-                  : 'Walang nakitang senyales ng scam'}
+              {neutral
+                ? 'Hindi sigurado'
+                : isScam
+                  ? lowConfidenceScam
+                    ? 'Posibleng scam — hindi sigurado'
+                    : 'MALAMANG SCAM'
+                  : lowConfidence
+                    ? 'Hindi sigurado'
+                    : 'Walang nakitang senyales ng scam'}
             </strong>
             <span>
-              {LABEL_TEXT[verdict.label]} ·{' '}
-              {(verdict.confidence * 100).toFixed(1)}% confident
+              {neutral
+                ? 'Walang malinaw na senyales'
+                : `${LABEL_TEXT[verdict.label]} · ${(verdict.confidence * 100).toFixed(1)}% confident`}
             </span>
+            {neutral && (
+              <span>Hindi sigurado ang modelo — walang senyales na mapagkakatiwalaan.</span>
+            )}
             {lowConfidence && (
               <span>Mababa ang kumpiyansa — walang malinaw na senyales.</span>
             )}

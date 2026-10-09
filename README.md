@@ -76,6 +76,9 @@ also gives you the HTTPS required for PWA install + service worker.
   signals (or a high non-ham probability with a hard signal), the verdict is escalated and
   labelled "via safety rules". Reputable domains such as `shopee.ph` are not treated as
   suspicious links.
+- **Neutral guard** — if the model says "scam" but the text has no scam markers at all
+  (no link, brand, OTP, urgency, loan, raffle), it shows "Hindi sigurado" instead of a
+  confident scam — so ordinary messages aren't falsely flagged.
 - **Learns from you, locally** — correct a verdict and the device remembers it (IndexedDB)
   and applies it to repeat/near-identical messages. A retrieval memory, not cloud, not
   on-device training — nothing leaves the phone.

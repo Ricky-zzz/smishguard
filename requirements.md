@@ -51,6 +51,10 @@ qualifies (in-scope list includes *Local embeddings*, *Edge AI*, *Privacy-preser
   signal (suspicious link/urgency/loan/raffle), the verdict is escalated and marked
   "via safety rules". Reputable sender domains and mere brand/OTP mentions alone do not
   trigger it.
+- **FR11 — Neutral guard.** If the model says `scam` but the text has **no** scam marker
+  (no suspicious link, brand, OTP request, urgency, loan, or raffle), the verdict is shown
+  as **"Hindi sigurado"** instead of a confident scam. Guards against out-of-distribution
+  casual Tagalog being wrongly flagged.
 
 ## 3. Non-functional requirements
 
