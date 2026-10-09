@@ -42,7 +42,8 @@ qualifies (in-scope list includes *Local embeddings*, *Edge AI*, *Privacy-preser
 - **FR7 — Proof panel.** Show a live network-request counter (starts at 0), per-inference
   latency, and the model/data size.
 - **FR8 — Feedback.** User can mark a verdict wrong ("legit ito" / "scam ito"). The
-  correction is stored locally in IndexedDB.
+  correction is stored locally in IndexedDB and is viewable/deletable in the **Corrections**
+  tab.
 - **FR9 — Local auto-correction.** On the next check, a stored correction (exact or
   ~similar message, token-Jaccard ≥ 0.8) is applied and the verdict is marked
   "via your correction". This is a local memory, **not** on-device training (§6).

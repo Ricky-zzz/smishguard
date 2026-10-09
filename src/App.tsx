@@ -5,7 +5,7 @@ import type { LoadStatus } from './detector';
 import { RuleExplainer, Reason } from './explainer/ruleExplainer';
 import { VerdictEngine, Verdict, VerdictSource } from './policy/verdictEngine';
 import { IndexedDbStorage, HistoryEntry } from './storage/indexedDbStorage';
-import { CorrectionStore } from './storage/correctionStore';
+import { Correction, CorrectionStore } from './storage/correctionStore';
 import probe from './proof/countingNetworkProbe';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -34,7 +34,7 @@ const SOURCE_TEXT: Record<VerdictSource, string> = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'check' | 'history'>('check');
+  const [activeTab, setActiveTab] = useState<'check' | 'history' | 'corrections'>('check');
   const [text, setText] = useState('');
   const [status, setStatus] = useState<'loading' | 'ready'>('loading');
   const [statusMsg, setStatusMsg] = useState('Starting local engine...');
@@ -45,6 +45,7 @@ export default function App() {
   const [netCount, setNetCount] = useState(0);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [correctionCount, setCorrectionCount] = useState(0);
+  const [correctionsList, setCorrectionsList] = useState<Correction[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -69,7 +70,10 @@ export default function App() {
     });
 
     storage.all().then(setHistory);
-    corrections.all().then((c) => setCorrectionCount(c.length));
+    corrections.all().then((c) => {
+      setCorrectionCount(c.length);
+      setCorrectionsList(c);
+    });
 
     const onInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -136,7 +140,9 @@ export default function App() {
     const trimmed = text.trim();
     if (!trimmed) return;
     await corrections.add(trimmed, label);
-    setCorrectionCount((await corrections.all()).length);
+    const all = await corrections.all();
+    setCorrectionCount(all.length);
+    setCorrectionsList(all);
     await check();
   };
 
@@ -159,7 +165,15 @@ export default function App() {
   const clearCorrections = async () => {
     await corrections.clear();
     setCorrectionCount(0);
+    setCorrectionsList([]);
     if (text.trim()) await check();
+  };
+
+  const removeCorrection = async (id: string) => {
+    await corrections.remove(id);
+    const all = await corrections.all();
+    setCorrectionCount(all.length);
+    setCorrectionsList(all);
   };
 
   const neutral = verdict?.neutral ?? false;
@@ -207,6 +221,12 @@ export default function App() {
           onClick={() => setActiveTab('history')}
         >
           Listahan ({history.length})
+        </button>
+        <button
+          className={activeTab === 'corrections' ? 'tab active' : 'tab'}
+          onClick={() => setActiveTab('corrections')}
+        >
+          Corrections ({correctionCount})
         </button>
       </nav>
 
@@ -354,11 +374,6 @@ export default function App() {
               The model downloads once on first load, then is cached. After that all
               inference and corrections stay on your device — try airplane mode.
             </p>
-            {correctionCount > 0 && (
-              <button className="ghost" onClick={clearCorrections}>
-                Clear my corrections ({correctionCount})
-              </button>
-            )}
           </section>
         </>
       )}
@@ -381,6 +396,39 @@ export default function App() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {activeTab === 'corrections' && (
+        <section className="card">
+          <h2>Local corrections ({correctionCount})</h2>
+          {correctionCount === 0 && (
+            <p className="fineprint">
+              Wala pa. Sa Suriin tab, gamitin ang "Mali — legit ito" o "Scam ito — hindi
+              na-flag" para magturo ang app locally.
+            </p>
+          )}
+          <ul className="history">
+            {correctionsList.map((c) => (
+              <li key={c.id} className={c.label === 'ham' ? 'hist-ham' : 'hist-scam'}>
+                <div>
+                  <strong>
+                    {c.label === 'ham' ? 'Natutunan: legit' : 'Natutunan: scam'}
+                  </strong>
+                  <span> · {new Date(c.at).toLocaleString()}</span>
+                  <p>{c.text}</p>
+                </div>
+                <button className="ghost" onClick={() => removeCorrection(c.id)}>
+                  x
+                </button>
+              </li>
+            ))}
+          </ul>
+          {correctionCount > 0 && (
+            <button className="ghost" onClick={clearCorrections}>
+              Clear all corrections
+            </button>
+          )}
         </section>
       )}
     </div>

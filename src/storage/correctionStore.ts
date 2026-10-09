@@ -53,6 +53,10 @@ export class CorrectionStore {
     return bestScore >= SIMILARITY_THRESHOLD ? best : null;
   }
 
+  async remove(id: string): Promise<void> {
+    await tx(CORRECTION_STORE, 'readwrite', (s) => s.delete(id));
+  }
+
   async clear(): Promise<void> {
     await tx(CORRECTION_STORE, 'readwrite', (s) => s.clear());
   }

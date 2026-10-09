@@ -80,8 +80,9 @@ also gives you the HTTPS required for PWA install + service worker.
   (no link, brand, OTP, urgency, loan, raffle), it shows "Hindi sigurado" instead of a
   confident scam — so ordinary messages aren't falsely flagged.
 - **Learns from you, locally** — correct a verdict and the device remembers it (IndexedDB)
-  and applies it to repeat/near-identical messages. A retrieval memory, not cloud, not
-  on-device training — nothing leaves the phone.
+  and applies it to repeat/near-identical messages. Review or delete any correction in the
+  **Corrections** tab. A retrieval memory, not cloud, not on-device training — nothing
+  leaves the phone.
 - **Offline** — a service worker precaches the app shell and caches the model on first
   load (`vite-plugin-pwa`), so everything after that runs without a network.
 - **Proof panel** — a live network-call counter, inference latency, and corrections
