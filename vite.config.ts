@@ -37,7 +37,7 @@ export default defineConfig({
             urlPattern: /^https:\/\/(cdn-lfs|huggingface\.co|cdn\.jsdelivr\.net).*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'smishguard-model',
+              cacheName: 'smishguard-model-v2',
               expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] }
             }

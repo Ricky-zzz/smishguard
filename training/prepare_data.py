@@ -67,6 +67,22 @@ PH_PRESET_URLS = [
 ]
 PH_PRESET_HF = ["Henit007/henit11", "Henit007/karannnn"]
 
+# Small hand-curated seed set so classes that are scarce in the public corpus
+# (otp_phish) are always present and the demo messages are represented. These
+# are authored during the hackathon and disclosed as curated examples.
+SEED_ROWS = [
+    ("GCash: Na-block ang account mo. I-verify agad: https://gcash-verify.top/otp at ilagay ang 6-digit code na natanggap mo.", "otp_phish"),
+    ("BDO: Your account has been locked. Unlock with your OTP: https://bdo-secure.info/login", "otp_phish"),
+    ("Maya: incomplete KYC. Send your OTP to unblock: https://maya-verify.site/pin", "otp_phish"),
+    ("Congrats! Nanalo ka ng P50,000. I-claim agad sa https://premyo-win.site bago mag-expire ngayong araw.", "scam"),
+    ("Your package is held by customs. Pay the PHP 300 release fee: https://dhl-tracking.top", "scam"),
+    ("Pautang agad, zero interest, walang collateral. I-message mo na ako ngayon para sa iyong loan.", "scam"),
+    ("GCash: You have successfully sent P250.00 to Aling Nena. Ref 9921. New balance P1,240.00.", "ham"),
+    ("BPI: Your transaction of PHP 250.00 at SM MAKATI was posted. If this was not you, call 889-10000. Never share your OTP.", "ham"),
+    ("Shopee: Your order #12345678 is out for delivery today. Rider: Juan D. Estimated time: 2-5 PM.", "ham"),
+    ("Nakuha ko na po yung padala niyo. Salamat po! - Aling Nena", "ham"),
+]
+
 
 def normalize_label(raw):
     return LABEL_MAP.get(str(raw).strip().lower())
@@ -163,6 +179,8 @@ def main():
             rows.extend(rows_from_url(url))
         for name in PH_PRESET_HF:
             rows.extend(rows_from_hf(name))
+
+    rows.extend(SEED_ROWS)
 
     if not rows:
         raise SystemExit(

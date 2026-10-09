@@ -53,6 +53,10 @@ acceptable model; `prepare_data.py` maps common source labels onto this schema. 
 label of `otp` means a genuine OTP/notification message and is mapped to `ham`; only a
 message already labeled scam/spam that asks for an OTP/code becomes `otp_phish`.
 
+`prepare_data.py` also adds a small **hand-curated seed set** (authored during the
+hackathon, disclosed) so scarce classes like `otp_phish` are always present and the demo
+messages are represented.
+
 ## Honesty
 
 Report the real accuracy/F1 from `eval.py`. Fake benchmarks are grounds for
