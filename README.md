@@ -113,14 +113,19 @@ examples, so the model is 3-class; those labels are only surfaced by the rules e
 
 ## Disclosures
 
-- **Models:** `sentence-transformers/all-MiniLM-L6-v2` (or `jcblaise/roberta-tagalog-base`)
-  fine-tuned by
-  this project → int8 ONNX published on Hugging Face.
+- **Models:** `sentence-transformers/all-MiniLM-L6-v2` fine-tuned for sequence
+  classification → int8 ONNX published at
+  [`Irumachi/smishguard-minilm`](https://huggingface.co/Irumachi/smishguard-minilm).
 - **Frameworks:** Vite, React, TypeScript, Transformers.js, ONNX Runtime Web; `transformers`,
   `datasets`, `onnxruntime`, `scikit-learn` (training).
 - **Cloud / APIs:** none used at runtime.
-- **Datasets:** public PH SMS datasets (see `training/prepare_data.py`).
-- **AI dev tools used:** _(list them here)_.
+- **Datasets:** public Philippine SMS data — `scottleechua/spam-and-marketing-sms`
+  (CC-BY-4.0), `Henit007/henit11` + `Henit007/karannnn` (Hugging Face), and the UCI
+  `sms_spam` collection (see `training/prepare_data.py`).
+- **Existing code / assets:** open datasets and the open pretrained backbone above; the
+  application code and the fine-tuned weights were produced during the hackathon.
+- **AI development tools used:** opencode (AI coding assistant) and Google Colab for model
+  training.
 
 ## Commands
 
