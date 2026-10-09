@@ -100,6 +100,7 @@ The abstractions (`Detector`, `Explainer`, `Storage`, `NetworkProbe`, plus the
 - [`requirements.md`](./requirements.md) — what we must accomplish
 - [`architecture.md`](./architecture.md) — structure and abstractions
 - [`deliverables.md`](./deliverables.md) — submission checklist
+- [`DISCLOSURES.md`](./DISCLOSURES.md) — full technical + model disclosure
 - [`Q&A.md`](./Q&A.md) — judge Q&A: hard questions and concrete answers
 - [`AGENTS.md`](./AGENTS.md) — instructions for AI coding agents
 - [`training/README.md`](./training/README.md) — how to reproduce the model
@@ -147,19 +148,16 @@ so the model is 3-class; those labels are only surfaced by the rules explainer.
 
 ## Disclosures
 
-- **Models:** `sentence-transformers/all-MiniLM-L6-v2` fine-tuned for sequence
-  classification → int8 ONNX published at
-  [`Irumachi/smishguard-minilm-v2`](https://huggingface.co/Irumachi/smishguard-minilm-v2).
-- **Frameworks:** Vite, React, TypeScript, Transformers.js, ONNX Runtime Web; `transformers`,
-  `datasets`, `onnxruntime`, `scikit-learn` (training).
-- **Cloud / APIs:** none used at runtime.
-- **Datasets:** public Philippine SMS data — `scottleechua/spam-and-marketing-sms`
-  (CC-BY-4.0), `Henit007/henit11` + `Henit007/karannnn` (Hugging Face), and the UCI
-  `sms_spam` collection (see `training/prepare_data.py`).
-- **Existing code / assets:** open datasets and the open pretrained backbone above; the
-  application code and the fine-tuned weights were produced during the hackathon.
-- **AI development tools used:** opencode (AI coding assistant) and Google Colab for model
-  training.
+The complete, evidence-based disclosure (models, frameworks, data, APIs, AI development
+tools, existing assets) is in **[`DISCLOSURES.md`](./DISCLOSURES.md)**. In short:
+
+- **Model:** `sentence-transformers/all-MiniLM-L6-v2` fine-tuned (best-epoch checkpoint) →
+  int8 ONNX at [`Irumachi/smishguard-minilm-v2`](https://huggingface.co/Irumachi/smishguard-minilm-v2).
+- **Runtime:** zero cloud — inference runs in-browser via Transformers.js on the WASM `q8`
+  backend; the model is fetched once from Hugging Face and cached by the service worker.
+- **Data:** public PH SMS sets (scottleechua CC-BY-4.0, Henit007 HF) + UCI SMS Spam
+  Collection + a small hand-curated seed set authored during the hackathon.
+- **AI dev tools:** opencode (AI coding assistant) and Google Colab (training).
 
 ## Commands
 
