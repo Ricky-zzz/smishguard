@@ -50,21 +50,6 @@ async function load(modelId: string): Promise<string> {
       progress: typeof p.progress === 'number' ? p.progress : 0
     });
 
-  const hasGpu = typeof navigator !== 'undefined' && 'gpu' in navigator;
-
-  if (hasGpu) {
-    try {
-      classifier = (await pipeline('text-classification', modelId, {
-        device: 'webgpu',
-        dtype: 'fp16',
-        progress_callback
-      })) as unknown as Classifier;
-      return 'webgpu';
-    } catch {
-      /* fall back to wasm */
-    }
-  }
-
   classifier = (await pipeline('text-classification', modelId, {
     device: 'wasm',
     dtype: 'q8',

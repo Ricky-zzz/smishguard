@@ -28,7 +28,7 @@ everything from cache.
 │                                                                          │
 │  Inference worker (Web Worker)                                           │
 │   └─ Transformers.js pipeline('text-classification') → ONNX Runtime Web  │
-│        backend: WASM (default) ── WebGPU (optional enhancement)          │
+│        backend: WASM int8 (q8)                                          │
 │                                                                          │
 │  Service worker (PWA)                                                    │
 │   └─ precache app shell + model files → offline after first load         │
@@ -133,8 +133,10 @@ interface NetworkProbe {
 
 - **Why a worker?** Model loading and the forward pass block the main thread; the worker
   keeps the UI responsive and isolates WASM memory.
-- **Why WASM default, WebGPU optional?** WebGPU is unavailable/uneven across devices
-  (NFR5). WASM-int8 is the safe, correct default; a 23 MB MiniLM is instant on CPU.
+- **Why WASM int8 (not WebGPU)?** WebGPU is unavailable/uneven across devices (NFR5), and
+  the shipped artifact is a single int8 (`q8`) ONNX model. WASM-int8 runs everywhere and a
+  ~23 MB MiniLM is instant on CPU. WebGPU stays a possible future enhancement (it would need
+  an additional `fp16` export).
 - **Why rules for explanation?** Removes the hallucination and size risk of a second
   model; deterministic and instant (NFR2, FR4).
 - **Why precache the model?** So the "airplane mode" demo is genuine (FR6, NFR4).
@@ -144,6 +146,7 @@ interface NetworkProbe {
 
 - Model fails to load → `MockDetector` keeps the app usable and the proof panel shows a
   clear "model unavailable" state (never a faked verdict).
-- No WebGPU → fall back to WASM silently; if WebGPU is requested and errors, retry WASM.
+- WebGPU unavailable is irrelevant: the app only ever uses WASM int8, so there is nothing
+  to fall back from.
 - Corrupt/empty input → validation message, no inference.
 - Offline first ever load → cannot happen; document that first load needs network.

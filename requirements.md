@@ -14,7 +14,7 @@ browser via ONNX Runtime Web / Transformers.js. No cloud AI at runtime.
 | Rule (from briefing) | How SmishGuard satisfies it |
 |---|---|
 | Substantially built during the hackathon | Built Oct 9–10; only open datasets + open pretrained backbones are pre-existing |
-| A meaningful part of AI inference executes locally | The classifier forward pass runs in-browser (WASM/WebGPU) |
+| A meaningful part of AI inference executes locally | The classifier forward pass runs in-browser via WASM int8 |
 | A working product, demonstrated | Live PWA demo on Demo Day |
 | Models, APIs, frameworks, major tools disclosed | See `deliverables.md` §4 |
 | Core Local AI works without depending entirely on a cloud AI API | Runtime makes **zero** network calls after first load; no AI API at all |
@@ -51,8 +51,9 @@ qualifies (in-scope list includes *Local embeddings*, *Edge AI*, *Privacy-preser
 - **NFR3 — Size.** int8 model bundle **< 50 MB** preferred (MiniLM ~23 MB; RoBERTa-tagalog
   ~110 MB is the fallback ceiling).
 - **NFR4 — Offline.** 100% of inference path works with no network.
-- **NFR5 — Compatibility.** Works on Chrome/Edge (WebGPU optional) and any WebAssembly
-  browser. WebGPU is an enhancement, never a hard dependency.
+- **NFR5 — Compatibility.** Runs on any WebAssembly browser (Chrome/Edge/Firefox/Safari),
+  CPU-only. The shipped int8 model uses the **WASM q8** backend; WebGPU is a possible future
+  enhancement (would need an `fp16` export), never a hard dependency.
 - **NFR6 — Determinism.** Same input → same verdict and explanation.
 
 ## 4. Training requirements

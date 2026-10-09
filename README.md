@@ -33,9 +33,8 @@ npm run build
 ## How it works
 
 - **Detection** — a fine-tuned small encoder exported to int8 ONNX, run by
-  [Transformers.js](https://github.com/huggingface/transformers.js) inside a Web Worker.
-  Backend is **WASM** by default; **WebGPU** is attempted first when available and is never
-  a hard requirement.
+  [Transformers.js](https://github.com/huggingface/transformers.js) inside a Web Worker on
+  the **WASM** backend (`dtype: q8`). Model: [`Irumachi/smishguard-minilm`](https://huggingface.co/Irumachi/smishguard-minilm).
 - **Explanation** — deterministic rules/signals (unknown URL, OTP request, brand
   impersonation, urgency, loan/raffle) rendered in Taglish. No LLM, no hallucination.
 - **Offline** — a service worker precaches the app shell and caches the model on first
