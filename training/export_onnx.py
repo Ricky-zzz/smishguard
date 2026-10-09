@@ -82,8 +82,8 @@ def main():
         check_parity(tokenizer, model, fp32_path, input_names)
         print("Export OK (new torch.export exporter, dynamo=True)")
         exported = True
-    except (TypeError, ValueError, ParityError) as exc:
-        print(f"new-exporter path failed ({type(exc).__name__}) — trying legacy")
+    except Exception as exc:
+        print(f"new-exporter path failed ({type(exc).__name__}: {exc}) — trying legacy")
         try:
             os.remove(fp32_path)
         except OSError:
@@ -101,7 +101,10 @@ def main():
             dynamic_axes=dynamic_axes,
             opset_version=14,
         )
-        check_parity(tokenizer, model, fp32_path, input_names)
+        try:
+            check_parity(tokenizer, model, fp32_path, input_names)
+        except ParityError as exc:
+            raise SystemExit(str(exc))
         print("Export OK (legacy exporter)")
         exported = True
 
@@ -156,7 +159,9 @@ def check_parity(tokenizer, model, fp32_path, input_names):
     if np.isnan(max_diff) or max_diff > PARITY_TOLERANCE:
         raise ParityError(
             f"PARITY FAILED (diff {max_diff:.2e} > {PARITY_TOLERANCE}). "
-            "The exported ONNX does not match PyTorch — do NOT upload it."
+            "The exported ONNX does not match PyTorch — do NOT upload it. "
+            "If the newer exporter was unavailable (onnxscript missing), install it with "
+            "'pip install onnxscript' and re-run export."
         )
     print("Parity check passed.")
 

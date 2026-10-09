@@ -42,7 +42,7 @@ prepare_data.py  →  finetune.py  →  export_onnx.py  →  eval.py  →  uploa
 ## Install (Colab)
 
 ```bash
-pip install "transformers>=4.44" "datasets" "onnx" "onnxruntime" \
+pip install "transformers>=4.44" "datasets" "onnx" "onnxscript" "onnxruntime" \
     scikit-learn accelerate
 ```
 
