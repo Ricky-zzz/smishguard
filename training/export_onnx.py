@@ -149,6 +149,19 @@ def inline_weights(onnx_path):
 
     proto = onnx.load(onnx_path)
     del proto.graph.value_info[:]
+
+    outputs = list(proto.graph.output)
+    if len(outputs) == 1 and outputs[0].name != "logits":
+        old = outputs[0].name
+        renamed = False
+        for node in proto.graph.node:
+            for i, o in enumerate(node.output):
+                if o == old:
+                    node.output[i] = "logits"
+                    renamed = True
+        if renamed:
+            outputs[0].name = "logits"
+
     onnx.save_model(proto, onnx_path, save_as_external_data=False)
     for suffix in (".data", ".weights.pkl"):
         try:
