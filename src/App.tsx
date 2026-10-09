@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { APP_NAME, EXAMPLE_MESSAGES } from './config';
-import { createDetector, Detector, DetectorResult, LABEL_TEXT } from './detector';
+import { createDetector, Detector, LABEL_TEXT } from './detector';
 import type { LoadStatus } from './detector';
 import { RuleExplainer, Reason } from './explainer/ruleExplainer';
+import { VerdictEngine, Verdict, VerdictSource } from './policy/verdictEngine';
 import { IndexedDbStorage, HistoryEntry } from './storage/indexedDbStorage';
+import { CorrectionStore } from './storage/correctionStore';
 import probe from './proof/countingNetworkProbe';
 
 let detectorPromise: Promise<Detector> | null = null;
 const explainer = new RuleExplainer();
 const storage = new IndexedDbStorage();
+const corrections = new CorrectionStore();
 
 const LABEL_CLASS: Record<string, string> = {
   ham: 'verdict ham',
@@ -19,19 +22,26 @@ const LABEL_CLASS: Record<string, string> = {
   raffle: 'verdict scam'
 };
 
+const SOURCE_TEXT: Record<VerdictSource, string> = {
+  model: 'on-device model',
+  rules: 'safety rules',
+  correction: 'your correction'
+};
+
 export default function App() {
   const [text, setText] = useState('');
   const [status, setStatus] = useState<'loading' | 'ready'>('loading');
   const [statusMsg, setStatusMsg] = useState('Starting local engine...');
   const [modelDesc, setModelDesc] = useState('');
-  const [result, setResult] = useState<DetectorResult | null>(null);
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [reasons, setReasons] = useState<Reason[]>([]);
   const [latency, setLatency] = useState<number | null>(null);
   const [netCount, setNetCount] = useState(0);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [correctionCount, setCorrectionCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const detectorRef = useRef<Detector | null>(null);
+  const engineRef = useRef<VerdictEngine | null>(null);
 
   useEffect(() => {
     probe.start();
@@ -41,30 +51,30 @@ export default function App() {
 
     if (!detectorPromise) detectorPromise = createDetector(onStatus);
     detectorPromise.then((d) => {
-      detectorRef.current = d;
+      engineRef.current = new VerdictEngine(d, corrections);
       setModelDesc(d.describe());
       probe.reset();
       setStatus('ready');
     });
 
     storage.all().then(setHistory);
+    corrections.all().then((c) => setCorrectionCount(c.length));
 
     const timer = window.setInterval(() => setNetCount(probe.count()), 400);
     return () => window.clearInterval(timer);
   }, []);
 
   const check = async () => {
-    const detector = detectorRef.current;
-    if (!detector || !text.trim()) return;
+    const engine = engineRef.current;
+    const trimmed = text.trim();
+    if (!engine || !trimmed) return;
     setBusy(true);
     setError(null);
     try {
-      const { result: res, ms } = await probe.measure(() =>
-        detector.classify(text.trim())
-      );
-      setResult(res);
+      const { result, ms } = await probe.measure(() => engine.judge(trimmed));
+      setVerdict(result);
       setLatency(Math.round(ms));
-      setReasons(await explainer.explain(text.trim(), res));
+      setReasons(await explainer.explain(trimmed, result));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -72,12 +82,20 @@ export default function App() {
     }
   };
 
+  const correct = async (label: 'ham' | 'scam') => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    await corrections.add(trimmed, label);
+    setCorrectionCount((await corrections.all()).length);
+    await check();
+  };
+
   const save = async () => {
-    if (!result) return;
+    if (!verdict) return;
     await storage.add({
       text: text.trim(),
-      label: result.label,
-      confidence: result.confidence,
+      label: verdict.label,
+      confidence: verdict.confidence,
       at: Date.now()
     });
     setHistory(await storage.all());
@@ -88,15 +106,15 @@ export default function App() {
     setHistory(await storage.all());
   };
 
-  const verdictClass = result ? LABEL_CLASS[result.label] : 'verdict';
-  const isScam = result ? result.label !== 'ham' : false;
+  const verdictClass = verdict ? LABEL_CLASS[verdict.label] : 'verdict';
+  const isScam = verdict ? verdict.label !== 'ham' : false;
 
   const scoreRows = useMemo(() => {
-    if (!result) return [];
-    return Object.entries(result.scores)
+    if (!verdict) return [];
+    return Object.entries(verdict.scores)
       .filter(([, v]) => v > 0.001)
       .sort((a, b) => b[1] - a[1]);
-  }, [result]);
+  }, [verdict]);
 
   return (
     <div className="app">
@@ -146,14 +164,21 @@ export default function App() {
         {error && <p className="error">{error}</p>}
       </section>
 
-      {result && (
+      {verdict && (
         <section className="card">
           <div className={verdictClass}>
             <strong>{isScam ? 'MALAMANG SCAM' : 'Mukhang legit'}</strong>
             <span>
-              {LABEL_TEXT[result.label]} ·{' '}
-              {(result.confidence * 100).toFixed(1)}% confident
+              {LABEL_TEXT[verdict.label]} ·{' '}
+              {(verdict.confidence * 100).toFixed(1)}% confident
             </span>
+          </div>
+
+          <div className="row">
+            <span className={`source source-${verdict.source}`}>
+              via {SOURCE_TEXT[verdict.source]}
+            </span>
+            {verdict.note && <span className="note">{verdict.note}</span>}
           </div>
 
           <ul className="reasons">
@@ -176,9 +201,20 @@ export default function App() {
             ))}
           </div>
 
-          <button className="ghost" onClick={save}>
-            I-save sa listahan
-          </button>
+          <div className="row">
+            <button className="ghost" onClick={save}>
+              I-save sa listahan
+            </button>
+            {isScam ? (
+              <button className="ghost" onClick={() => correct('ham')}>
+                Mali — legit ito
+              </button>
+            ) : (
+              <button className="ghost" onClick={() => correct('scam')}>
+                Scam ito — hindi na-flag
+              </button>
+            )}
+          </div>
         </section>
       )}
 
@@ -196,13 +232,13 @@ export default function App() {
             <span className="proof-label">last inference</span>
           </div>
           <div className="proof-item">
-            <span className="proof-num">int8</span>
-            <span className="proof-label">quantized model</span>
+            <span className="proof-num">{correctionCount}</span>
+            <span className="proof-label">local corrections learned</span>
           </div>
         </div>
         <p className="fineprint">
           The model downloads once on first load, then is cached. After that all
-          inference runs in your browser — try airplane mode, it still works.
+          inference and corrections stay on your device — try airplane mode.
         </p>
       </section>
 

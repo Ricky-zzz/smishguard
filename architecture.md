@@ -112,6 +112,20 @@ interface NetworkProbe {
 - Impl: `CountingNetworkProbe`. The proof panel renders `count()` live (target: 0 during
   a demo, because everything is cached).
 
+### 3.5 VerdictEngine (composes Detector + rules + corrections)
+```ts
+type VerdictSource = 'model' | 'rules' | 'correction';
+interface Verdict extends DetectorResult { source: VerdictSource; note?: string; }
+class VerdictEngine {
+  constructor(detector: Detector, corrections: CorrectionStore);
+  judge(text: string): Promise<Verdict>;
+}
+```
+- Applies, in order: (1) a stored **correction** (exact / token-Jaccard ≥ 0.8) → `correction`;
+  (2) the model; (3) the **rules safety net** — URL + scam signals, or P(non-ham) ≥ 0.4, on
+  a `ham` verdict → `rules`; otherwise `model`. Implements FR9/FR10 without touching the UI's
+  `Detector` abstraction.
+
 ## 4. Module map
 
 | Path | Responsibility |
@@ -120,9 +134,12 @@ interface NetworkProbe {
 | `src/detector/workerDetector.ts` | Transformers.js implementation (owns the worker) |
 | `src/detector/mockDetector.ts` | rules-only stand-in |
 | `src/detector/index.ts` | `createDetector` factory (model → rules fallback) |
+| `src/policy/verdictEngine.ts` | composes model + safety net + corrections |
 | `src/signals.ts` | shared rule/signal patterns (detector + explainer) |
 | `src/explainer/ruleExplainer.ts` | deterministic reasons |
+| `src/storage/db.ts` | shared IndexedDB open + transaction helper |
 | `src/storage/indexedDbStorage.ts` | history persistence |
+| `src/storage/correctionStore.ts` | local correction memory (FR9) |
 | `src/proof/countingNetworkProbe.ts` | request counter + latency |
 | `src/worker/inference.worker.ts` | owns the model, answers `classify` messages |
 | PWA via `vite-plugin-pwa` | precache app shell + cache model on first load |
@@ -139,6 +156,10 @@ interface NetworkProbe {
   an additional `fp16` export).
 - **Why rules for explanation?** Removes the hallucination and size risk of a second
   model; deterministic and instant (NFR2, FR4).
+- **Why corrections via memory, not fine-tuning?** On-device gradient training is
+  research-grade in 2026 and would blow the time budget. A local retrieval memory (FR9)
+  adapts to the user's corrections instantly, stays private, and is honestly described as
+  memory — not "the model re-trained".
 - **Why precache the model?** So the "airplane mode" demo is genuine (FR6, NFR4).
 - **Why no backend?** The whole point is that nothing leaves the device (§5 of reqs).
 

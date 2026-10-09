@@ -40,8 +40,14 @@ qualifies (in-scope list includes *Local embeddings*, *Edge AI*, *Privacy-preser
   and it works in airplane mode.
 - **FR7 — Proof panel.** Show a live network-request counter (starts at 0), per-inference
   latency, and the model/data size.
-- **FR8 — Report/feedback.** User can mark a verdict wrong; stored locally (used for the
-  stretch "learns on device" feature only).
+- **FR8 — Feedback.** User can mark a verdict wrong ("legit ito" / "scam ito"). The
+  correction is stored locally in IndexedDB.
+- **FR9 — Local auto-correction.** On the next check, a stored correction (exact or
+  ~similar message, token-Jaccard ≥ 0.8) is applied and the verdict is marked
+  "via your correction". This is a local memory, **not** on-device training (§6).
+- **FR10 — Rules safety net.** If the model says `ham` but the text has a URL **and**
+  scam signals (OTP/brand/urgency), or P(non-ham) ≥ 0.4, the verdict is escalated and
+  marked "via safety rules". Guarantees obvious scams cannot silently pass.
 
 ## 3. Non-functional requirements
 
@@ -88,6 +94,9 @@ user can check every text. Cloud-only cannot make that privacy guarantee.
 - A conversational chatbot or LLM explanation generator (deterministic explainer instead).
 - Guaranteeing detection of *novel, unseen* scam wording.
 - Real-time URL/webpage fetching or reputation lookups (would break the offline claim).
+- **On-device gradient training / fine-tuning** of the neural network. In 2026 that is
+  research-grade on consumer hardware. FR9 is a local correction *memory* (retrieval),
+  and we say so — it must not be described as the model "re-training".
 
 ## 7. Open decisions / assumptions
 

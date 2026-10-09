@@ -37,12 +37,19 @@ npm run build
   the **WASM** backend (`dtype: q8`). Model: [`Irumachi/smishguard-minilm`](https://huggingface.co/Irumachi/smishguard-minilm).
 - **Explanation** — deterministic rules/signals (unknown URL, OTP request, brand
   impersonation, urgency, loan/raffle) rendered in Taglish. No LLM, no hallucination.
+- **Safety net** — if the model says "legit" but the text has a URL + scam signals (or a
+  high scam probability), the verdict is escalated and labelled "via safety rules", so
+  obvious scams can't silently pass.
+- **Learns from you, locally** — correct a verdict and the device remembers it (IndexedDB)
+  and applies it to repeat/near-identical messages. A retrieval memory, not cloud, not
+  on-device training — nothing leaves the phone.
 - **Offline** — a service worker precaches the app shell and caches the model on first
   load (`vite-plugin-pwa`), so everything after that runs without a network.
-- **Proof panel** — a live network-call counter, inference latency, and model size.
+- **Proof panel** — a live network-call counter, inference latency, and corrections learned.
 
-The four abstractions (`Detector`, `Explainer`, `Storage`, `NetworkProbe`) live behind
-interfaces — see `architecture.md`.
+The abstractions (`Detector`, `Explainer`, `Storage`, `NetworkProbe`, plus the
+`VerdictEngine` that composes rules + corrections) live behind interfaces — see
+`architecture.md`.
 
 ## Project documents
 
