@@ -79,14 +79,14 @@ export function detectSignals(text: string): Signal[] {
       kind: 'url',
       match: url[0],
       weight: 0.2,
-      reason: `May link na "${url[0]}" — tiyaking kilala at opisyal ang sender bago i-click.`
+      reason: `May link na "${url[0]}". Tiyaking kilala at opisyal ang sender bago i-click.`
     });
     if (isSuspiciousUrl(url[0])) {
       signals.push({
         kind: 'suspicious_url',
         match: url[0],
         weight: 0.45,
-        reason: `Kahina-hinala ang link na "${url[0]}" — huwag i-click o magbigay ng OTP.`
+        reason: `Kahina-hinala ang link na "${url[0]}". Huwag i-click o magbigay ng OTP.`
       });
     }
   }
@@ -107,7 +107,7 @@ export function detectSignals(text: string): Signal[] {
       kind: 'brand',
       match: brand[0],
       weight: 0.3,
-      reason: `Binanggit ang ${brand[0]} — tiyaking opisyal ang sender bago mag-click o magbigay ng detalye.`
+      reason: `Binanggit ang ${brand[0]}. Tiyaking opisyal ang sender bago mag-click o magbigay ng detalye.`
     });
   }
 
@@ -137,7 +137,7 @@ export function detectSignals(text: string): Signal[] {
       kind: 'loan',
       match: loan[0],
       weight: 0.4,
-      reason: 'Tungkol sa loan o utang — karaniwang scam offer.'
+      reason: 'Tungkol sa loan o utang. Karaniwang scam offer.'
     });
   }
 

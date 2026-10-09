@@ -1,4 +1,4 @@
-import { Detector, DetectorResult, Label, LABELS, emptyScores } from '../detector/types';
+import { Detector, Label, LABELS, emptyScores } from '../detector/types';
 import { detectSignals } from '../signals';
 import { CorrectionStore } from '../storage/correctionStore';
 
@@ -34,7 +34,7 @@ export class VerdictEngine {
         confidence: 1,
         scores,
         source: 'correction',
-        note: 'Base sa correction mo — natutunan locally.'
+        note: 'Base sa correction mo. Natutunan locally.'
       };
     }
 
@@ -75,20 +75,20 @@ export class VerdictEngine {
         ? 'otp_phish'
         : 'scam';
       return this.escalate(
-        result,
         label,
         'rules',
-        'Na-flag ng safety rules: may link at senyales ng scam.'
+        'Na-flag ng safety rules: may link at senyales ng scam.',
+        0.9
       );
     }
 
     if (result.label === 'ham' && nonHam >= NON_HAM_THRESHOLD && hardSignal) {
       const label = this.topNonHam(result.scores);
       return this.escalate(
-        result,
         label,
         'rules',
-        'Hindi sigurado ang modelo pero mataas ang senyales ng scam.'
+        'Hindi sigurado ang modelo pero mataas ang senyales ng scam.',
+        nonHam
       );
     }
 
@@ -109,15 +109,14 @@ export class VerdictEngine {
   }
 
   private escalate(
-    result: DetectorResult,
     label: Label,
     source: VerdictSource,
-    note: string
+    note: string,
+    confidence: number
   ): Verdict {
-    const scores = { ...result.scores };
-    scores[label] = Math.max(scores[label], 0.65);
-    const sum = LABELS.reduce((acc, l) => acc + scores[l], 0) || 1;
-    for (const l of LABELS) scores[l] = scores[l] / sum;
-    return { label, confidence: scores[label], scores, source, note };
+    const scores = emptyScores();
+    scores[label] = confidence;
+    scores.ham = 1 - confidence;
+    return { label, confidence, scores, source, note };
   }
 }

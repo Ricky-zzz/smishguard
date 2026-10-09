@@ -18,15 +18,6 @@ const explainer = new RuleExplainer();
 const storage = new IndexedDbStorage();
 const corrections = new CorrectionStore();
 
-const LABEL_CLASS: Record<string, string> = {
-  ham: 'verdict ham',
-  scam: 'verdict scam',
-  impersonation: 'verdict scam',
-  otp_phish: 'verdict scam',
-  loan: 'verdict scam',
-  raffle: 'verdict scam'
-};
-
 const SOURCE_TEXT: Record<VerdictSource, string> = {
   model: 'on-device model',
   rules: 'safety rules',
@@ -116,12 +107,12 @@ export default function App() {
     setError(null);
     if (trimmed.length < 8) {
       setBusy(false);
-      setError('Masyadong maikli — i-paste ang buong SMS na natanggap mo.');
+      setError('Masyadong maikli. I-paste ang buong SMS na natanggap mo.');
       return;
     }
     if (trimmed.length > 500) {
       setBusy(false);
-      setError('Mas mahaba pa sa 500 characters — i-paste lang ang SMS.');
+      setError('Mas mahaba pa sa 500 characters. I-paste lang ang SMS.');
       return;
     }
     try {
@@ -179,11 +170,13 @@ export default function App() {
   const neutral = verdict?.neutral ?? false;
   const lowConfidence = verdict ? verdict.label === 'ham' && verdict.confidence < 0.55 : false;
   const lowConfidenceScam = verdict ? verdict.label !== 'ham' && verdict.confidence < 0.65 : false;
-  const verdictClass = verdict
-    ? neutral || lowConfidence || lowConfidenceScam
-      ? 'verdict low'
-      : LABEL_CLASS[verdict.label]
-    : 'verdict';
+  const tone = !verdict
+    ? null
+    : neutral || lowConfidence || lowConfidenceScam
+      ? 'low'
+      : verdict.label === 'ham'
+        ? 'ham'
+        : 'scam';
   const isScam = verdict ? verdict.label !== 'ham' : false;
 
   const scoreRows = useMemo(() => {
@@ -194,21 +187,24 @@ export default function App() {
   }, [verdict]);
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div>
-          <h1>{APP_NAME}</h1>
-          <p className="tagline">
-            On-device Philippine smishing detector. Nothing leaves this phone.
-          </p>
+    <>
+      <header className="site-header">
+        <div className="site-header-inner">
+          <div>
+            <h1>{APP_NAME}</h1>
+            <p className="tagline">
+              On-device Philippine smishing detector. Nothing leaves this phone.
+            </p>
+          </div>
+          {!installed && installPrompt && (
+            <button className="ghost install-btn" onClick={installApp}>
+              Install app
+            </button>
+          )}
         </div>
-        {!installed && installPrompt && (
-          <button className="ghost install-btn" onClick={installApp}>
-            Install app
-          </button>
-        )}
       </header>
 
+      <div className="app">
       <nav className="tabs">
         <button
           className={activeTab === 'check' ? 'tab active' : 'tab'}
@@ -232,13 +228,13 @@ export default function App() {
 
       {activeTab === 'check' && (
         <>
-          <section className="card">
-            <div className="row">
-              <span className={`pill ${status}`}>
-                {status === 'loading' ? statusMsg : `Engine ready — ${modelDesc}`}
-              </span>
-            </div>
+          <div className="status-row">
+            <span className={`pill ${status}`}>
+              {status === 'loading' ? statusMsg : `Engine ready · ${modelDesc}`}
+            </span>
+          </div>
 
+          <section className="card">
             <textarea
               value={text}
               placeholder="I-paste dito ang suspicious na text message..."
@@ -246,12 +242,14 @@ export default function App() {
               rows={4}
               maxLength={500}
             />
-            <span className="fineprint">{text.length}/500</span>
-            {!text && (
-              <button className="ghost" onClick={useClipboard}>
-                Gamitin ang na-copy kong message
-              </button>
-            )}
+            <div className="row field-meta">
+              <span className="fineprint">{text.length}/500</span>
+              {!text && (
+                <button className="ghost" onClick={useClipboard}>
+                  Gamitin ang na-copy kong message
+                </button>
+              )}
+            </div>
 
             <div className="examples">
               {EXAMPLE_MESSAGES.map((ex) => (
@@ -279,14 +277,14 @@ export default function App() {
           </section>
 
           {verdict && (
-            <section className="card">
-              <div className={verdictClass}>
+            <section className={`card result-card tone-${tone}`}>
+              <div className="result-head">
                 <strong>
                   {neutral
                     ? 'Hindi sigurado'
                     : isScam
                       ? lowConfidenceScam
-                        ? 'Posibleng scam — hindi sigurado'
+                        ? 'Posibleng scam, hindi sigurado'
                         : 'MALAMANG SCAM'
                       : lowConfidence
                         ? 'Hindi sigurado'
@@ -298,13 +296,13 @@ export default function App() {
                     : `${LABEL_TEXT[verdict.label]} · ${(verdict.confidence * 100).toFixed(1)}% confident`}
                 </span>
                 {neutral && (
-                  <span>Hindi sigurado ang modelo — walang senyales na mapagkakatiwalaan.</span>
+                  <span>Hindi sigurado ang modelo. Walang senyales na mapagkakatiwalaan.</span>
                 )}
                 {lowConfidence && (
-                  <span>Mababa ang kumpiyansa — walang malinaw na senyales.</span>
+                  <span>Mababa ang kumpiyansa. Walang malinaw na senyales.</span>
                 )}
                 {lowConfidenceScam && (
-                  <span>Mababa ang kumpiyansa — huwag munang mag-click o magbigay ng OTP.</span>
+                  <span>Mababa ang kumpiyansa. Huwag munang mag-click o magbigay ng OTP.</span>
                 )}
               </div>
 
@@ -327,7 +325,9 @@ export default function App() {
                     <span>{LABEL_TEXT[label as keyof typeof LABEL_TEXT]}</span>
                     <div className="bar">
                       <div
-                        className="bar-fill"
+                        className={
+                          label === 'ham' ? 'bar-fill bar-fill-ham' : 'bar-fill bar-fill-scam'
+                        }
                         style={{ width: `${Math.round(score * 100)}%` }}
                       />
                     </div>
@@ -335,17 +335,17 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="row">
+              <div className="row actions">
                 <button className="ghost" onClick={save}>
                   I-save sa listahan
                 </button>
                 {isScam ? (
                   <button className="ghost" onClick={() => correct('ham')}>
-                    Mali — legit ito
+                    Mali, legit ito
                   </button>
                 ) : (
                   <button className="ghost" onClick={() => correct('scam')}>
-                    Scam ito — hindi na-flag
+                    Scam ito, hindi na-flag
                   </button>
                 )}
               </div>
@@ -372,7 +372,7 @@ export default function App() {
             </div>
             <p className="fineprint">
               The model downloads once on first load, then is cached. After that all
-              inference and corrections stay on your device — try airplane mode.
+              inference and corrections stay on your device. Try airplane mode.
             </p>
           </section>
         </>
@@ -404,7 +404,7 @@ export default function App() {
           <h2>Local corrections ({correctionCount})</h2>
           {correctionCount === 0 && (
             <p className="fineprint">
-              Wala pa. Sa Suriin tab, gamitin ang "Mali — legit ito" o "Scam ito — hindi
+              Wala pa. Sa Suriin tab, gamitin ang "Mali, legit ito" o "Scam ito, hindi
               na-flag" para magturo ang app locally.
             </p>
           )}
@@ -431,6 +431,7 @@ export default function App() {
           )}
         </section>
       )}
-    </div>
+      </div>
+    </>
   );
 }

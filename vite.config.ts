@@ -15,8 +15,8 @@ export default defineConfig({
         name: 'SmishGuard',
         short_name: 'SmishGuard',
         description: 'On-device Philippine SMS smishing detector',
-        theme_color: '#0b1120',
-        background_color: '#0b1120',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         share_target: {
