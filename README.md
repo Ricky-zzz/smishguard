@@ -82,6 +82,7 @@ The abstractions (`Detector`, `Explainer`, `Storage`, `NetworkProbe`, plus the
 - [`requirements.md`](./requirements.md) — what we must accomplish
 - [`architecture.md`](./architecture.md) — structure and abstractions
 - [`deliverables.md`](./deliverables.md) — submission checklist
+- [`Q&A.md`](./Q&A.md) — judge Q&A: hard questions and concrete answers
 - [`AGENTS.md`](./AGENTS.md) — instructions for AI coding agents
 - [`training/README.md`](./training/README.md) — how to reproduce the model
 
