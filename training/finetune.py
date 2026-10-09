@@ -60,14 +60,17 @@ def main():
         label2id=label2id,
     )
 
+    def tokenize(batch):
+        out = tokenizer(batch["text"], truncation=True, max_length=128)
+        out["labels"] = [label2id[l] for l in batch["label"]]
+        return out
+
     tokenized = train_ds.map(
-        lambda b: tokenizer(b["text"], truncation=True, max_length=128),
-        batched=True,
-    ).map(lambda b: {"labels": [label2id[l] for l in b["label"]]}, batched=True)
+        tokenize, batched=True, remove_columns=train_ds.column_names
+    )
     val_tok = val_ds.map(
-        lambda b: tokenizer(b["text"], truncation=True, max_length=128),
-        batched=True,
-    ).map(lambda b: {"labels": [label2id[l] for l in b["label"]]}, batched=True)
+        tokenize, batched=True, remove_columns=val_ds.column_names
+    )
 
     def metrics(pred):
         preds = np.argmax(pred.predictions, axis=-1)
