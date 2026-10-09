@@ -60,14 +60,23 @@ The model is trained on public Philippine SMS datasets via `training/smishguard_
 
 ### Evaluation
 
-> Fill this in from `training/eval.py` on the held-out test set. **Report the real
-> numbers.**
+Honest held-out results from `training/eval.py` (747 test messages, 3 classes):
 
 | Metric | Value |
 |---|---|
-| Accuracy | _TBD_ |
-| Macro-F1 | _TBD_ |
-| Test set size | _TBD_ |
+| Accuracy | **0.9746** |
+| Macro-F1 | **0.9681** |
+| Test set size | 747 |
+
+| Class | Precision | Recall | F1 | Support |
+|---|---|---|---|---|
+| ham | 0.97 | 0.98 | 0.98 | 386 |
+| otp_phish | 0.95 | 0.95 | 0.95 | 79 |
+| scam | 0.99 | 0.97 | 0.98 | 282 |
+
+Trained on public PH SMS data (`--ph-preset`: scottleechua CC-BY-4.0 + Henit007 HF sets)
+plus the English SMS Spam Collection. The corpus has no `impersonation`/`loan`/`raffle`
+examples, so the model is 3-class; those labels are only surfaced by the rules explainer.
 
 ## Disclosures
 
