@@ -169,3 +169,14 @@ npm run build      # typecheck + production build
 npm run lint       # eslint
 npm run typecheck  # tsc --noEmit
 ```
+
+## Reflections
+- damn running solo is hard, especially with the time limit i tried and ensured that my topic was simple and manageble for ease of entry but damnit still burns time and tokens not to mention frustrating when dealing with local llms hallucination
+
+- it was a nice try though im never impulsively going solo XD
+
+- dataset was rather weak even for me, could have scrapped but man power issues are real noted..
+
+- brainstorming with a group is really different the collision of diff ideas does produce much more substancial outputs 
+
+- ggs nice try hopefully the coffee at the event center is delicious hehe
