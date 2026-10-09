@@ -1,0 +1,44 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
+
+export default defineConfig({
+  worker: {
+    format: 'es'
+  },
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg'],
+      manifest: {
+        name: 'SmishGuard',
+        short_name: 'SmishGuard',
+        description: 'On-device Philippine SMS smishing detector',
+        theme_color: '#0b1120',
+        background_color: '#0b1120',
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          { src: 'icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
+          { src: 'icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,wasm}'],
+        maximumFileSizeToCacheInBytes: 60 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/(cdn-lfs|huggingface\.co|cdn\.jsdelivr\.net).*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'smishguard-model',
+              expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          }
+        ]
+      }
+    })
+  ]
+});
